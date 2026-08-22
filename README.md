@@ -1,234 +1,380 @@
-# Dayflow – Human Resource Management System
+# WorkZen – Human Resource Management System
 
-**Human Resource Management System – Odoo x NMIT Hackathon**
+**Human Resource Management System – Odoo × NMIT Hackathon 2026**
 
-> **Every workday, perfectly aligned.**
+> **Work smarter. Stay in sync.**
 
-Dayflow is a modern Human Resource Management System designed to digitize and streamline core HR operations such as employee management, attendance tracking, leave management, payroll visibility, and approval workflows.
-
-The system provides separate role-based experiences for **Admin/HR** and **Employees**, allowing organizations to manage their workforce efficiently while giving employees convenient access to their own HR information.
+WorkZen is a full-stack Human Resource Management System (HRMS) designed to digitize, centralize, and streamline core workforce workflows — including employee management, attendance, leave, payroll, profile management, and compliance documents — through an intuitive role-based portal.
 
 ---
 
-## 🚀 Key Features
+## 🏆 Hackathon Details
 
-### 👑 Admin / HR
-
-* Secure Admin/HR authentication
-* Role-based access control
-* Employee directory
-* Search and filter employees
-* Add and onboard employees
-* Edit employee information
-* Activate/deactivate employee accounts
-* View employee profiles
-* View company-wide attendance
-* Filter attendance by date, department, and employee
-* Attendance regularization
-* View all leave requests
-* Approve or reject leave requests
-* Add HR comments to leave decisions
-* Automatic leave-balance adjustment
-* Company-wide payroll management
-* Generate monthly payslips
-* Update salary structures
-* View payroll statistics
-* Workforce and attendance analytics
-
-### 🧑‍💻 Employee
-
-* Secure employee authentication
-* Personal dashboard
-* Personal profile management
-* Edit permitted contact and address information
-* Check-in / Check-out
-* Office / Remote work mode
-* Live working-hours timer
-* Daily attendance history
-* Weekly attendance calendar
-* Attendance status tracking
-* Apply for Paid, Sick, or Unpaid Leave
-* Leave balance tracking
-* Leave request history
-* View approval/rejection status
-* View HR comments
-* View personal salary information
-* Digital payslip
-* Salary breakdown and deductions
-* Quick access to frequently used HR actions
+- **Event:** Odoo × NMIT Hackathon 2026
+- **Project:** WorkZen HRMS
+- **Repository:** https://github.com/vaishnavikp156/dayflow-hrms
 
 ---
 
-## 🔐 Authentication & Security
+## 💡 Why WorkZen?
 
-Dayflow uses role-based access control to ensure that users can only access the features permitted for their role.
+Traditional HR workflows often rely on scattered spreadsheets, manual leave tracking, delayed payroll calculations, and disconnected employee records.
 
-### Authentication
+**WorkZen** brings these workflows together into one centralized platform.
 
-* JWT-based authentication
-* Password hashing using bcrypt
-* Protected API routes
-* Protected frontend routes
-* Role-based authorization
-* Admin/HR and Employee permissions
-* Unauthorized requests return appropriate `401` / `403` responses
+### Key Benefits
 
-Employees can access their own HR information, while Admin/HR users have organization-wide management privileges.
+1. **Employee Transparency**  
+   Employees can view their attendance, leave balances, salary information, payslips, profile details, and compliance documents.
 
----
+2. **HR Efficiency**  
+   Admin/HR users can manage employees, attendance, leave approvals, salary structures, payroll, and employee records from one dashboard.
 
-## 📊 Attendance Management
-
-Dayflow provides interactive attendance tracking with:
-
-* Check-in and Check-out
-* Automatic timestamp recording
-* Working-hours calculation
-* Office / Remote work mode
-* Daily attendance history
-* Weekly attendance calendar
-* Present / Absent / Half-day / Leave statuses
-* Duplicate punch prevention
-* Admin attendance roll-call
-* Attendance filtering and search
-* Admin attendance regularization
+3. **Secure Role-Based Access**  
+   JWT authentication and role-based authorization ensure that employees and administrators only access the information permitted for their role.
 
 ---
 
-## 🏖️ Leave & Time-Off Management
+# 👥 User Roles & Access Control
 
-Employees can apply for:
-
-* Paid Leave
-* Sick Leave
-* Unpaid Leave
-
-The system provides:
-
-* Automatic leave-duration calculation
-* Leave balance validation
-* Date validation
-* Overlapping-request prevention
-* Pending / Approved / Rejected statuses
-* Employee leave history
-* Admin approval/rejection workflow
-* HR comments
-* Automatic leave-balance deduction after approval
-* Protection against duplicate balance deduction
+| Feature | Employee | Admin / HR |
+|---|:---:|:---:|
+| Account Registration & Verification | ✅ | ✅ |
+| Personal Dashboard | ✅ | — |
+| Admin Dashboard | — | ✅ |
+| Employee Directory | Own profile | All employees |
+| Profile Management | Limited editing | Full editing |
+| Profile Avatar | ✅ | ✅ |
+| Employee Documents | Own documents | All documents |
+| Attendance | Own attendance | All employees |
+| Check-in / Check-out | ✅ | — |
+| Leave Application | ✅ | — |
+| Leave Approval | — | ✅ |
+| Payroll View | Own payslips | All payroll |
+| Salary Structure Updates | — | ✅ |
+| Employee Switching | — | ✅ |
+| Light / Dark Mode | ✅ | ✅ |
 
 ---
 
-## 💰 Payroll & Salary Management
+# ✨ Core Features
+
+## 1. 🔐 Authentication & Authorization
+
+- Employee and HR/Admin registration
+- Employee ID, email, password, and role
+- Password validation
+- Password hashing using bcryptjs
+- Email verification using a token-based demo flow
+- JWT authentication
+- Protected routes
+- Role-based access control
+- Incorrect credential error handling
+- Quick Demo Login for hackathon evaluation
+
+> The email verification flow is implemented without requiring an external SMTP service, making the application reliable for offline hackathon demonstrations.
+
+---
+
+## 2. 👤 Employee Profile Management
+
+Employees can view:
+
+- Personal details
+- Job details
+- Department
+- Designation
+- Contact information
+- Address
+- Salary information
+- Documents
+- Profile picture/avatar
+
+Employees can edit permitted fields such as:
+
+- Phone number
+- Address
+- Profile picture
+
+Admin/HR users can manage employee information across the organization.
+
+### Avatar System
+
+WorkZen includes custom vector SVG avatars for demo employees.
+
+The avatars are self-contained and do not depend on external image hosting.
+
+---
+
+## 3. 📄 Employee Documents & Verification
+
+Employees can manage their own document dossier.
+
+Supported document categories include:
+
+- Government ID
+- Address Proof
+- Educational Certificate
+- Experience Certificate
+- Offer Letter
+- Tax Declaration
+
+Documents have verification statuses such as:
+
+- Verified
+- Pending Verification
+- Rejected
+
+Admin/HR users can review employee documents and update verification status.
+
+---
+
+## 4. 🕐 Attendance Management
 
 ### Employee
 
-Employees can view their own digital payslips containing:
+Employees can:
 
-* Basic Salary
-* HRA
-* Allowances
-* Gross Earnings
-* PF
-* Tax / TDS
-* Unpaid Leave Deductions
-* Total Deductions
-* Net Salary
-* Payment Status
-* Pay Period
+- Check in
+- Check out
+- View daily attendance
+- View weekly attendance
+- View working hours
+- View attendance status
+
+Supported statuses include:
+
+- Present
+- Absent
+- Half-day
+- Leave
+- Weekend
+- Upcoming
 
 ### Admin / HR
 
 Admins can:
 
-* View company payroll
-* Search and filter payroll records
-* Generate monthly salary records
-* Update salary components
-* Automatically recalculate gross and net salary
-* View employee payslips
-* Track payment status
+- View company-wide attendance
+- Search employees
+- Filter attendance
+- View attendance records
 
-Employees cannot modify salary information or access organization-wide payroll.
+Duplicate check-ins are prevented through validation.
 
 ---
 
-## 📈 Dashboard & Analytics
+## 5. 🌴 Leave & Time-Off Management
 
-### Admin Dashboard
+Employees can apply for:
 
-Provides an overview of:
+- Paid Leave
+- Sick Leave
+- Unpaid Leave
 
-* Total workforce
-* Present employees
-* Pending leave approvals
-* Payroll volume
-* Department-wise workforce distribution
-* Attendance status breakdown
-* Live attendance activity
-* Quick leave approval actions
+They can:
 
-### Employee Dashboard
+- Select a date range
+- Add remarks
+- View leave balance
+- Track request status
+- View HR comments
 
-Provides:
+Leave statuses:
 
-* Current work status
-* Attendance summary
-* Weekly attendance rhythm
-* Leave balances
-* Pending leave requests
-* Latest salary information
-* Quick actions for Profile, Attendance, Time Off, and Payslips
+- Pending
+- Approved
+- Rejected
 
----
+### Admin / HR
 
-## 🛠️ Tech Stack
+Admins can:
 
-### Frontend
+- View all leave requests
+- Approve requests
+- Reject requests
+- Add comments
+- Manage leave balances
 
-* React
-* Vite
-* Tailwind CSS
-* React Router
-* Axios
-* Lucide Icons
-* Framer Motion
-
-### Backend
-
-* Node.js
-* Express.js
-* REST APIs
-* JWT
-* bcryptjs
-
-### Database
-
-* MongoDB
-* Mongoose
-
-### Development
-
-* Git
-* GitHub
-* Antigravity IDE
+Approved leave automatically updates the employee's available balance.
 
 ---
 
-## 📁 Project Structure
+## 6. 💰 Payroll & Salary Management
+
+### Employee Payroll View
+
+Employees can view their own salary information and payslips in read-only mode.
+
+Payslips include:
+
+- Basic Salary
+- HRA
+- Allowances
+- Gross Earnings
+- PF
+- Professional Tax
+- Other Deductions
+- Unpaid Leave Deduction
+- Net Salary
+- Payment Status
+- Pay Period
+
+### Admin Payroll Control
+
+Admin/HR users can:
+
+- View payroll of all employees
+- Generate payroll
+- Update salary components
+- Update payment status
+- View salary structures
+- Ensure payroll accuracy
+
+Salary calculations are displayed in **Indian Rupees (₹ INR)**.
+
+---
+
+# 📊 Dashboards
+
+## Employee Dashboard
+
+The employee dashboard provides:
+
+- Attendance summary
+- Leave balance
+- Latest salary information
+- Quick access to Profile
+- Quick access to Attendance
+- Quick access to Leave Requests
+- Quick access to Payslips
+- 7-day attendance rhythm
+- **Recent Activity & Alerts**
+
+Recent Activity can reflect events such as:
+
+- Attendance activity
+- Leave submissions
+- Leave approvals/rejections
+- Payslip activity
+- Document/compliance updates
+
+---
+
+## Admin / HR Dashboard
+
+The Admin dashboard provides:
+
+- Employee list
+- Workforce overview
+- Attendance records
+- Leave approvals
+- Payroll information
+- Workforce statistics
+- Department information
+- Employee management
+
+### Admin Employee Switcher
+
+Admins can search for employees directly from the top navigation and quickly inspect employee context.
+
+The switcher provides quick access to:
+
+- Employee profile
+- Attendance
+- Leave information
+- Salary information
+
+Employees do not have access to this functionality.
+
+---
+
+# 🎨 UI / UX
+
+WorkZen includes:
+
+- Modern SaaS-style interface
+- Responsive layout
+- Light mode
+- Dark mode
+- Consistent cards and navigation
+- Custom WorkZen branding
+- Custom employee avatars
+- Interactive modals
+- Toast notifications
+- Status badges
+- Responsive dashboard components
+
+### Branding
+
+**WorkZen HRMS**
+
+> **Work smarter. Stay in sync.**
+
+---
+
+# 🛠️ Technology Stack
+
+## Frontend
+
+- React 18
+- Vite 6
+- Tailwind CSS
+- React Router
+- Axios
+- Lucide React Icons
+- Framer Motion
+- date-fns
+
+## Backend
+
+- Node.js
+- Express.js
+- REST APIs
+- JWT
+- bcryptjs
+- CORS
+- dotenv
+
+## Database
+
+- MongoDB
+- Mongoose
+
+## Development
+
+- Git
+- GitHub
+- Antigravity IDE
+
+---
+
+# 📁 Project Structure
 
 ```text
 dayflow-hrms/
 │
 ├── client/
+│   ├── public/
+│   │   ├── workzen-icon.svg
+│   │   └── workzen-logo.svg
+│   │
 │   ├── src/
 │   │   ├── api/
 │   │   ├── components/
+│   │   │   ├── admin/
+│   │   │   ├── attendance/
+│   │   │   ├── common/
+│   │   │   ├── layout/
+│   │   │   └── leave/
 │   │   ├── context/
-│   │   └── pages/
-│   │       ├── admin/
-│   │       └── employee/
-│   ├── package.json
-│   └── vite.config.js
+│   │   ├── pages/
+│   │   │   ├── admin/
+│   │   │   └── employee/
+│   │   └── utils/
+│   │
+│   ├── index.html
+│   └── package.json
 │
 ├── server/
 │   ├── src/
@@ -237,189 +383,12 @@ dayflow-hrms/
 │   │   ├── middleware/
 │   │   ├── models/
 │   │   ├── routes/
-│   │   └── utils/
+│   │   ├── utils/
+│   │   └── test_*.js
+│   │
 │   ├── .env.example
 │   └── package.json
 │
 ├── package.json
 ├── .gitignore
 └── README.md
-```
-
----
-
-## ⚙️ Installation & Setup
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/vaishnavikp156/dayflow-hrms.git
-cd dayflow-hrms
-```
-
-### 2. Install dependencies
-
-```bash
-npm install
-```
-
-Install client dependencies:
-
-```bash
-cd client
-npm install
-cd ..
-```
-
-Install server dependencies:
-
-```bash
-cd server
-npm install
-cd ..
-```
-
-### 3. Configure environment variables
-
-Create:
-
-```text
-server/.env
-```
-
-using the provided:
-
-```text
-server/.env.example
-```
-
-Add the required MongoDB and JWT configuration values.
-
-**Do not commit `.env` files or secret credentials to GitHub.**
-
-### 4. Start the application
-
-From the root directory:
-
-```bash
-npm run dev
-```
-
-The application runs with:
-
-```text
-Frontend: http://localhost:5173
-Backend:  http://localhost:5000
-```
-
----
-
-## 🔑 Demo Accounts
-
-### HR Admin
-
-```text
-Email: admin@dayflow.com
-Password: admin123
-```
-
-### Employee – Alex Rivera
-
-```text
-Email: alex@dayflow.com
-Password: employee123
-```
-
-### Employee – Elena Rostova
-
-```text
-Email: elena@dayflow.com
-Password: employee123
-```
-
-### Employee – Marcus Vance
-
-```text
-Email: marcus@dayflow.com
-Password: employee123
-```
-
-These accounts are provided as seeded demo accounts for hackathon evaluation.
-
----
-
-## 🧪 Testing
-
-Dayflow includes automated verification suites covering the major modules:
-
-```text
-test_phase1.js → Database & seed verification
-test_phase2.js → Authentication & RBAC
-test_phase3.js → Employee & profile management
-test_phase4.js → Attendance
-test_phase5.js → Leave management
-test_phase6.js → Payroll
-test_phase7.js → End-to-end regression testing
-```
-
-The final regression suite verifies the major HR workflows including:
-
-* Authentication
-* Role-based access
-* Employee onboarding
-* Profile updates
-* Attendance check-in/check-out
-* Leave application and approval
-* Payroll generation
-* Employee payroll access restrictions
-
-The frontend production build was also verified successfully.
-
----
-
-## 🎯 Project Objective
-
-The objective of Dayflow is to provide a centralized HR platform that simplifies workforce management by bringing employee information, attendance, leave, payroll, and approval workflows into one secure and easy-to-use system.
-
----
-
-## 🏆 Hackathon
-
-**Event:** Odoo x NMIT Hackathon
-
-**Project:** Dayflow – Human Resource Management System
-
-**Repository:**
-https://github.com/vaishnavikp156/dayflow-hrms
-
----
-
-## 👥 User Roles
-
-| Role       | Access                                                                                     |
-| ---------- | ------------------------------------------------------------------------------------------ |
-| Admin / HR | Workforce management, attendance oversight, leave approvals, payroll management, analytics |
-| Employee   | Personal profile, attendance, leave applications, salary/payslips                          |
-
----
-
-## 🔒 Security Note
-
-This repository contains demo credentials intended for hackathon evaluation.
-
-Production deployments should use:
-
-* Strong unique passwords
-* Secure JWT secrets
-* Environment variables
-* Proper MongoDB access controls
-* HTTPS
-* Secure production authentication configuration
-
-Never commit real credentials, API keys, database passwords, or `.env` files to the repository.
-
----
-
-## 🌟 Dayflow
-
-**Every workday, perfectly aligned.**
