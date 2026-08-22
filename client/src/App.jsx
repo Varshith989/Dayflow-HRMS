@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import LoginPage from './pages/LoginPage';
@@ -22,7 +23,7 @@ const RootRedirect = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="w-10 h-10 border-3 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
@@ -41,43 +42,45 @@ const RootRedirect = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<LoginPage />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/login" element={<LoginPage />} />
 
-            {/* Admin Role Protected Routes with Shared Layout */}
-            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-              <Route element={<AppLayout />}>
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/employees" element={<EmployeeDirectoryPage />} />
-                <Route path="/admin/attendance" element={<AllAttendancePage />} />
-                <Route path="/admin/leaves" element={<LeaveApprovalPage />} />
-                <Route path="/admin/payroll" element={<PayrollManagementPage />} />
-                <Route path="/admin/profile" element={<ProfilePage />} />
+              {/* Admin Role Protected Routes with Shared Layout */}
+              <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                <Route element={<AppLayout />}>
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/employees" element={<EmployeeDirectoryPage />} />
+                  <Route path="/admin/attendance" element={<AllAttendancePage />} />
+                  <Route path="/admin/leaves" element={<LeaveApprovalPage />} />
+                  <Route path="/admin/payroll" element={<PayrollManagementPage />} />
+                  <Route path="/admin/profile" element={<ProfilePage />} />
+                </Route>
               </Route>
-            </Route>
 
-            {/* Employee Role Protected Routes with Shared Layout */}
-            <Route element={<ProtectedRoute allowedRoles={['employee', 'admin']} />}>
-              <Route element={<AppLayout />}>
-                <Route path="/employee" element={<EmployeeDashboard />} />
-                <Route path="/employee/attendance" element={<MyAttendancePage />} />
-                <Route path="/employee/leaves" element={<MyLeavesPage />} />
-                <Route path="/employee/salary" element={<MySalaryPage />} />
-                <Route path="/employee/profile" element={<ProfilePage />} />
+              {/* Employee Role Protected Routes with Shared Layout */}
+              <Route element={<ProtectedRoute allowedRoles={['employee', 'admin']} />}>
+                <Route element={<AppLayout />}>
+                  <Route path="/employee" element={<EmployeeDashboard />} />
+                  <Route path="/employee/attendance" element={<MyAttendancePage />} />
+                  <Route path="/employee/leaves" element={<MyLeavesPage />} />
+                  <Route path="/employee/salary" element={<MySalaryPage />} />
+                  <Route path="/employee/profile" element={<ProfilePage />} />
+                </Route>
               </Route>
-            </Route>
 
-            {/* Index and fallback redirects */}
-            <Route path="/" element={<RootRedirect />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </ToastProvider>
-    </AuthProvider>
+              {/* Index and fallback redirects */}
+              <Route path="/" element={<RootRedirect />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </ToastProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

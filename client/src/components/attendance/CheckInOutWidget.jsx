@@ -6,9 +6,7 @@ import {
   Building,
   Laptop,
   CheckCircle2,
-  AlertCircle,
   Timer,
-  Sparkles,
 } from 'lucide-react';
 import api from '../../api/client';
 import { useToast } from '../../context/ToastContext';
@@ -109,7 +107,7 @@ const CheckInOutWidget = ({ onAttendanceChange }) => {
 
   if (statusData.loading) {
     return (
-      <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 flex items-center justify-center gap-3 text-slate-400">
+      <div className="p-6 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-3 text-slate-500 dark:text-slate-400">
         <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
         <span className="text-xs">Loading today's punch status...</span>
       </div>
@@ -119,16 +117,16 @@ const CheckInOutWidget = ({ onAttendanceChange }) => {
   const { isCheckedIn, isCheckedOut, attendance } = statusData;
 
   return (
-    <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900/95 via-slate-900 to-brand-950/30 border border-slate-800 shadow-2xl space-y-6">
+    <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-2xl space-y-6 transition-colors">
       {/* Header & Status Indicator */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-5">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-brand-500/10 text-brand-400 border border-brand-500/20 flex items-center justify-center shadow-glow">
+          <div className="w-12 h-12 rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20 flex items-center justify-center shadow-sm dark:shadow-glow">
             <Clock className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white tracking-tight">Today's Attendance Punch</h3>
-            <p className="text-xs text-slate-400">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Today's Attendance Punch</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               {format(new Date(), 'EEEE, MMMM dd, yyyy')}
             </p>
           </div>
@@ -137,18 +135,18 @@ const CheckInOutWidget = ({ onAttendanceChange }) => {
         {/* Current Punch State Badge */}
         <div>
           {!isCheckedIn ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
               Not Checked In Yet
             </span>
           ) : !isCheckedOut ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Currently Working ({workMode})
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-              <CheckCircle2 className="w-4 h-4 text-indigo-400" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/25">
+              <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               Punch Completed for Today
             </span>
           )}
@@ -158,36 +156,36 @@ const CheckInOutWidget = ({ onAttendanceChange }) => {
       {/* Main Punch Content Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
         {/* Left: Punch Timestamps Card */}
-        <div className="space-y-3 p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80">
+        <div className="space-y-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-400">Punch In Time:</span>
-            <span className="font-mono font-bold text-white">
+            <span className="text-slate-500 dark:text-slate-400">Punch In Time:</span>
+            <span className="font-mono font-bold text-slate-900 dark:text-white">
               {attendance?.checkIn ? format(new Date(attendance.checkIn), 'hh:mm:ss a') : '--:--:--'}
             </span>
           </div>
 
           <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-400">Punch Out Time:</span>
-            <span className="font-mono font-bold text-white">
+            <span className="text-slate-500 dark:text-slate-400">Punch Out Time:</span>
+            <span className="font-mono font-bold text-slate-900 dark:text-white">
               {attendance?.checkOut ? format(new Date(attendance.checkOut), 'hh:mm:ss a') : '--:--:--'}
             </span>
           </div>
 
-          <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-800">
-            <span className="text-slate-400">Total Work Hours:</span>
-            <span className="font-bold text-emerald-400">
+          <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200 dark:border-slate-800">
+            <span className="text-slate-500 dark:text-slate-400">Total Work Hours:</span>
+            <span className="font-bold text-emerald-600 dark:text-emerald-400">
               {attendance?.totalHours ? `${attendance.totalHours} hrs` : isCheckedIn ? 'In Progress' : '0.00 hrs'}
             </span>
           </div>
         </div>
 
         {/* Center: Live Timer / Work Mode Selector */}
-        <div className="text-center p-4 rounded-2xl bg-slate-950/80 border border-slate-800/80 flex flex-col items-center justify-center">
-          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1 flex items-center gap-1">
-            <Timer className="w-3.5 h-3.5 text-brand-400" />
+        <div className="text-center p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 flex flex-col items-center justify-center">
+          <span className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-1 flex items-center gap-1">
+            <Timer className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
             {isCheckedIn && !isCheckedOut ? 'Active Working Time' : 'Today Working Duration'}
           </span>
-          <div className="text-3xl font-mono font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-brand-300">
+          <div className="text-3xl font-mono font-black tracking-wider text-slate-900 dark:text-white">
             {isCheckedIn && !isCheckedOut
               ? elapsedTime
               : attendance?.totalHours
@@ -204,7 +202,7 @@ const CheckInOutWidget = ({ onAttendanceChange }) => {
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                   workMode === 'Office'
                     ? 'bg-brand-600 text-white shadow-glow'
-                    : 'bg-slate-900 text-slate-400 hover:text-white'
+                    : 'bg-slate-200 dark:bg-slate-900 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <Building className="w-3 h-3" /> Office
@@ -215,7 +213,7 @@ const CheckInOutWidget = ({ onAttendanceChange }) => {
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                   workMode === 'Remote'
                     ? 'bg-indigo-600 text-white shadow-glow'
-                    : 'bg-slate-900 text-slate-400 hover:text-white'
+                    : 'bg-slate-200 dark:bg-slate-900 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <Laptop className="w-3 h-3" /> Remote
@@ -257,11 +255,11 @@ const CheckInOutWidget = ({ onAttendanceChange }) => {
               )}
             </button>
           ) : (
-            <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-center">
-              <span className="text-xs font-semibold text-emerald-400 flex items-center justify-center gap-1.5">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-center">
+              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4" /> Attendance Completed
               </span>
-              <p className="text-[11px] text-slate-400 mt-1">Status: {attendance?.status}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Status: {attendance?.status}</p>
             </div>
           )}
 
@@ -272,7 +270,7 @@ const CheckInOutWidget = ({ onAttendanceChange }) => {
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               placeholder="Add optional notes/remarks..."
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
           )}
         </div>

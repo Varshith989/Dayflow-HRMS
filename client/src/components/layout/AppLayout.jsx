@@ -7,11 +7,11 @@ const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex selection:bg-brand-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex selection:bg-brand-500 selection:text-white transition-colors duration-200">
       {/* Background ambient lighting */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute -top-32 right-1/4 w-[500px] h-[500px] bg-brand-600/10 rounded-full blur-[140px]"></div>
-        <div className="absolute -bottom-32 left-1/3 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[140px]"></div>
+        <div className="absolute -top-32 right-1/4 w-[500px] h-[500px] bg-brand-500/5 dark:bg-brand-600/10 rounded-full blur-[140px]"></div>
+        <div className="absolute -bottom-32 left-1/3 w-[500px] h-[500px] bg-indigo-500/5 dark:bg-indigo-600/10 rounded-full blur-[140px]"></div>
       </div>
 
       {/* Sidebar */}

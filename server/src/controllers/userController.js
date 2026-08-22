@@ -136,15 +136,19 @@ const createEmployee = async (req, res) => {
       });
     }
 
-    // Generate unique employee ID if not provided (e.g. EMP-005)
+    // Generate unique employee ID if not provided (e.g. EMP-007)
     let employeeId = req.body.employeeId;
     if (!employeeId) {
-      const count = await User.countDocuments();
-      employeeId = `EMP-${String(count + 1).padStart(3, '0')}`;
+      let num = (await User.countDocuments()) + 1;
+      while (await User.findOne({ employeeId: `EMP-${String(num).padStart(3, '0')}` })) {
+        num++;
+      }
+      employeeId = `EMP-${String(num).padStart(3, '0')}`;
     }
 
     // Default password if none provided
-    const userPassword = password || 'dayflow123';
+    const userPassword = password || 'employee123';
+    const avatars = require('../utils/avatars');
 
     const newEmployee = new User({
       employeeId,
@@ -156,13 +160,11 @@ const createEmployee = async (req, res) => {
       designation,
       phone: phone || '',
       joiningDate: joiningDate ? new Date(joiningDate) : new Date(),
-      avatar:
-        avatar ||
-        `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 90000000000)}?auto=format&fit=crop&q=80&w=256`,
+      avatar: avatar || avatars.generic(name.slice(0, 2).toUpperCase()),
       status: 'Active',
       address: address || {},
       emergencyContact: emergencyContact || {},
-      leaveBalance: leaveBalance || { paid: 12, sick: 8, unpaid: 0 },
+      leaveBalance: leaveBalance || { paid: 14, sick: 7, unpaid: 0 },
     });
 
     await newEmployee.save();

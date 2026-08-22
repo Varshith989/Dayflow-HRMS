@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const Leave = require('../models/Leave');
 const Salary = require('../models/Salary');
+const demoAvatars = require('./avatars');
 const { format, subDays } = require('date-fns');
 
 dotenv.config();
@@ -16,105 +17,155 @@ const seedDatabase = async (disconnectWhenDone = true) => {
     await Leave.deleteMany({});
     await Salary.deleteMany({});
 
-    console.log('👤 Creating demo Admin and Employee users...');
+    console.log('👤 Creating demo Indian Admin and Employee users...');
     const usersToCreate = [
       {
         employeeId: 'EMP-001',
-        name: 'Sarah Jenkins',
+        name: 'Priya Iyer',
         email: 'admin@dayflow.com',
         password: 'admin123',
         role: 'admin',
         department: 'Human Resources',
-        designation: 'HR Director & People Ops Lead',
-        phone: '+91 98765 43210',
+        designation: 'HR Manager & People Ops Lead',
+        phone: '+91 98450 12345',
         joiningDate: new Date('2023-01-10'),
-        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=256',
+        avatar: demoAvatars.priya,
         status: 'Active',
         address: {
-          street: '42 Orchid Boulevard, Silicon Valley Tech Zone',
-          city: 'Bangalore',
+          street: '12th Main, Indiranagar',
+          city: 'Bengaluru',
           state: 'Karnataka',
-          zip: '560064',
+          zip: '560038',
         },
         emergencyContact: {
-          name: 'David Jenkins',
+          name: 'Venkatesh Iyer',
           relation: 'Spouse',
-          phone: '+91 98765 43219',
+          phone: '+91 98450 12349',
         },
         leaveBalance: { paid: 18, sick: 10, unpaid: 0 },
       },
       {
         employeeId: 'EMP-002',
-        name: 'Alex Rivera',
+        name: 'Ananya Sharma',
         email: 'alex@dayflow.com',
         password: 'employee123',
         role: 'employee',
         department: 'Engineering',
-        designation: 'Senior Full-Stack Engineer',
-        phone: '+91 98112 34567',
-        joiningDate: new Date('2023-06-15'),
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=256',
+        designation: 'Senior Fullstack Engineer',
+        phone: '+91 98860 23456',
+        joiningDate: new Date('2023-03-15'),
+        avatar: demoAvatars.ananya,
         status: 'Active',
         address: {
           street: '15 Green Meadows, Koramangala 4th Block',
-          city: 'Bangalore',
+          city: 'Bengaluru',
           state: 'Karnataka',
           zip: '560034',
         },
         emergencyContact: {
-          name: 'Maria Rivera',
+          name: 'Sunita Sharma',
           relation: 'Mother',
-          phone: '+91 98112 34569',
+          phone: '+91 98860 23459',
         },
         leaveBalance: { paid: 14, sick: 7, unpaid: 0 },
       },
       {
         employeeId: 'EMP-003',
-        name: 'Elena Rostova',
+        name: 'Rohan Nair',
         email: 'elena@dayflow.com',
         password: 'employee123',
         role: 'employee',
         department: 'Product Design',
         designation: 'Lead UI/UX Designer',
-        phone: '+91 98223 45678',
-        joiningDate: new Date('2023-09-01'),
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
+        phone: '+91 97410 34567',
+        joiningDate: new Date('2023-06-01'),
+        avatar: demoAvatars.rohan,
         status: 'Active',
         address: {
-          street: '88 Indiranagar 100ft Road',
-          city: 'Bangalore',
-          state: 'Karnataka',
-          zip: '560038',
-        },
-        emergencyContact: {
-          name: 'Ivan Rostov',
-          relation: 'Brother',
-          phone: '+91 98223 45670',
-        },
-        leaveBalance: { paid: 11, sick: 6, unpaid: 0 },
-      },
-      {
-        employeeId: 'EMP-004',
-        name: 'Marcus Vance',
-        email: 'marcus@dayflow.com',
-        password: 'employee123',
-        role: 'employee',
-        department: 'Sales & Marketing',
-        designation: 'Growth Marketing Manager',
-        phone: '+91 98334 56789',
-        joiningDate: new Date('2024-02-01'),
-        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=256',
-        status: 'Active',
-        address: {
-          street: '102 Palm Residency, HSR Layout Sector 2',
-          city: 'Bangalore',
+          street: '45 Palm Avenue, HSR Layout Sector 1',
+          city: 'Bengaluru',
           state: 'Karnataka',
           zip: '560102',
         },
         emergencyContact: {
-          name: 'Clara Vance',
-          relation: 'Sister',
-          phone: '+91 98334 56780',
+          name: 'Madhavan Nair',
+          relation: 'Father',
+          phone: '+91 97410 34560',
+        },
+        leaveBalance: { paid: 12, sick: 6, unpaid: 0 },
+      },
+      {
+        employeeId: 'EMP-004',
+        name: 'Arjun Menon',
+        email: 'marcus@dayflow.com',
+        password: 'employee123',
+        role: 'employee',
+        department: 'Sales & Marketing',
+        designation: 'Marketing Director',
+        phone: '+91 99000 45678',
+        joiningDate: new Date('2022-11-10'),
+        avatar: demoAvatars.arjun,
+        status: 'Active',
+        address: {
+          street: '202 Marine Lines, Nariman Point',
+          city: 'Mumbai',
+          state: 'Maharashtra',
+          zip: '400021',
+        },
+        emergencyContact: {
+          name: 'Deepa Menon',
+          relation: 'Spouse',
+          phone: '+91 99000 45670',
+        },
+        leaveBalance: { paid: 15, sick: 8, unpaid: 0 },
+      },
+      {
+        employeeId: 'EMP-005',
+        name: 'Sneha Kulkarni',
+        email: 'sneha@dayflow.com',
+        password: 'employee123',
+        role: 'employee',
+        department: 'Finance',
+        designation: 'Financial Controller',
+        phone: '+91 98230 56789',
+        joiningDate: new Date('2023-01-20'),
+        avatar: demoAvatars.sneha,
+        status: 'Active',
+        address: {
+          street: '14 FC Road, Shivaji Nagar',
+          city: 'Pune',
+          state: 'Maharashtra',
+          zip: '411005',
+        },
+        emergencyContact: {
+          name: 'Rajesh Kulkarni',
+          relation: 'Brother',
+          phone: '+91 98230 56780',
+        },
+        leaveBalance: { paid: 16, sick: 9, unpaid: 0 },
+      },
+      {
+        employeeId: 'EMP-006',
+        name: 'Karthik Reddy',
+        email: 'karthik@dayflow.com',
+        password: 'employee123',
+        role: 'employee',
+        department: 'Engineering',
+        designation: 'DevOps & Cloud Engineer',
+        phone: '+91 98490 67890',
+        joiningDate: new Date('2023-08-01'),
+        avatar: demoAvatars.karthik,
+        status: 'Active',
+        address: {
+          street: '78 HITEC City Main Road, Madhapur',
+          city: 'Hyderabad',
+          state: 'Telangana',
+          zip: '500081',
+        },
+        emergencyContact: {
+          name: 'Anil Reddy',
+          relation: 'Father',
+          phone: '+91 98490 67899',
         },
         leaveBalance: { paid: 15, sick: 8, unpaid: 0 },
       },
@@ -127,7 +178,7 @@ const seedDatabase = async (disconnectWhenDone = true) => {
       createdUsers.push(userDoc);
     }
 
-    const [adminUser, alex, elena, marcus] = createdUsers;
+    const [priya, ananya, rohan, arjun, sneha, karthik] = createdUsers;
 
     console.log('📅 Generating realistic attendance history for the past 7 days...');
     const attendanceRecords = [];
@@ -139,66 +190,89 @@ const seedDatabase = async (disconnectWhenDone = true) => {
       const isWeekend = targetDate.getDay() === 0 || targetDate.getDay() === 6;
 
       if (!isWeekend) {
-        // Attendance for Alex
+        // Attendance for Ananya (Engineering)
         attendanceRecords.push({
-          userId: alex._id,
+          userId: ananya._id,
           date: dateStr,
           checkIn: new Date(`${dateStr}T09:12:00.000Z`),
           checkOut: i === 0 ? null : new Date(`${dateStr}T17:45:00.000Z`),
           totalHours: i === 0 ? 0 : 8.5,
           status: 'Present',
           workMode: i % 2 === 0 ? 'Office' : 'Remote',
-          remarks: i === 0 ? 'Checked in on time' : 'Completed sprint planning and feature work',
+          remarks: i === 0 ? 'Checked in on time' : 'Sprint planning and core HRMS features',
         });
 
-        // Attendance for Elena
+        // Attendance for Rohan (Design)
         attendanceRecords.push({
-          userId: elena._id,
+          userId: rohan._id,
           date: dateStr,
           checkIn: new Date(`${dateStr}T09:30:00.000Z`),
           checkOut: i === 0 ? null : new Date(`${dateStr}T18:00:00.000Z`),
           totalHours: i === 0 ? 0 : 8.5,
           status: 'Present',
           workMode: 'Office',
-          remarks: 'Design system refinements',
+          remarks: 'UI/UX design system refinements & dark theme',
         });
 
-        // Attendance for Marcus
+        // Attendance for Arjun (Marketing)
         if (i === 3) {
-          // Half day
           attendanceRecords.push({
-            userId: marcus._id,
+            userId: arjun._id,
             date: dateStr,
             checkIn: new Date(`${dateStr}T09:00:00.000Z`),
             checkOut: new Date(`${dateStr}T13:30:00.000Z`),
             totalHours: 4.5,
             status: 'Half-day',
             workMode: 'Office',
-            remarks: 'Half day for medical checkup',
+            remarks: 'Half day for medical appointment',
           });
         } else {
           attendanceRecords.push({
-            userId: marcus._id,
+            userId: arjun._id,
             date: dateStr,
             checkIn: new Date(`${dateStr}T09:05:00.000Z`),
             checkOut: i === 0 ? null : new Date(`${dateStr}T17:35:00.000Z`),
             totalHours: i === 0 ? 0 : 8.5,
             status: 'Present',
             workMode: 'Office',
-            remarks: 'Client demo calls & campaign launch',
+            remarks: 'Client demo calls and hackathon campaign launch',
           });
         }
 
-        // Attendance for Admin (Sarah)
+        // Attendance for Sneha (Finance)
         attendanceRecords.push({
-          userId: adminUser._id,
+          userId: sneha._id,
+          date: dateStr,
+          checkIn: new Date(`${dateStr}T09:15:00.000Z`),
+          checkOut: i === 0 ? null : new Date(`${dateStr}T17:45:00.000Z`),
+          totalHours: i === 0 ? 0 : 8.5,
+          status: 'Present',
+          workMode: 'Office',
+          remarks: 'Monthly payroll disbursement auditing',
+        });
+
+        // Attendance for Karthik (DevOps)
+        attendanceRecords.push({
+          userId: karthik._id,
+          date: dateStr,
+          checkIn: new Date(`${dateStr}T09:00:00.000Z`),
+          checkOut: i === 0 ? null : new Date(`${dateStr}T18:15:00.000Z`),
+          totalHours: i === 0 ? 0 : 9.2,
+          status: 'Present',
+          workMode: 'Remote',
+          remarks: 'Cloud cluster monitoring & health checks',
+        });
+
+        // Attendance for Priya (Admin)
+        attendanceRecords.push({
+          userId: priya._id,
           date: dateStr,
           checkIn: new Date(`${dateStr}T08:50:00.000Z`),
           checkOut: i === 0 ? null : new Date(`${dateStr}T17:30:00.000Z`),
           totalHours: i === 0 ? 0 : 8.6,
           status: 'Present',
           workMode: 'Office',
-          remarks: 'HR operations and team reviews',
+          remarks: 'HR operations, interviews & team performance reviews',
         });
       }
     }
@@ -208,105 +282,145 @@ const seedDatabase = async (disconnectWhenDone = true) => {
     console.log('📝 Generating sample leave applications...');
     const leaveRecords = [
       {
-        userId: alex._id,
+        userId: ananya._id,
         leaveType: 'Paid',
         startDate: format(subDays(today, -2), 'yyyy-MM-dd'),
         endDate: format(subDays(today, -3), 'yyyy-MM-dd'),
         daysCount: 2,
-        reason: 'Attending National Hackathon Finals & Tech Showcase',
+        reason: 'Attending Odoo x NMIT National Hackathon Showcase',
         status: 'Pending',
         adminComment: '',
       },
       {
-        userId: elena._id,
+        userId: rohan._id,
         leaveType: 'Sick',
         startDate: format(subDays(today, 5), 'yyyy-MM-dd'),
         endDate: format(subDays(today, 5), 'yyyy-MM-dd'),
         daysCount: 1,
-        reason: 'Viral fever and prescribed rest',
+        reason: 'Viral fever and prescribed medical rest',
         status: 'Approved',
         adminComment: 'Approved. Take sufficient rest and get well soon!',
-        reviewedBy: adminUser._id,
+        reviewedBy: priya._id,
         reviewedAt: new Date(subDays(today, 5)),
       },
       {
-        userId: marcus._id,
+        userId: arjun._id,
         leaveType: 'Paid',
         startDate: format(subDays(today, 10), 'yyyy-MM-dd'),
         endDate: format(subDays(today, 8), 'yyyy-MM-dd'),
         daysCount: 3,
-        reason: 'Family holiday trip to Goa',
+        reason: 'Family trip to Ooty & Coorg',
         status: 'Approved',
         adminComment: 'Approved. Enjoy your vacation!',
-        reviewedBy: adminUser._id,
+        reviewedBy: priya._id,
         reviewedAt: new Date(subDays(today, 11)),
       },
     ];
 
     await Leave.insertMany(leaveRecords);
 
-    console.log('💰 Generating salary and payroll structures...');
+    console.log('💰 Generating realistic Indian salary structures (INR)...');
     const salaryRecords = [
-      // Alex Rivera (Senior Engineer)
+      // Ananya Sharma (Senior Fullstack Developer)
       {
-        userId: alex._id,
+        userId: ananya._id,
         month: 8,
         year: 2026,
-        basicSalary: 75000,
-        hra: 25000,
-        allowances: 15000,
-        deductions: { tax: 9000, pf: 4500, unpaidLeaveDeduction: 0, other: 500 },
+        basicSalary: 70000,
+        hra: 28000,
+        allowances: 18000,
+        deductions: { tax: 7800, pf: 4200, unpaidLeaveDeduction: 0, other: 0 },
+        grossSalary: 116000,
+        netSalary: 104000,
         paymentStatus: 'Paid',
         paymentDate: new Date('2026-08-31'),
-        remarks: 'August 2026 Salary',
+        remarks: 'August 2026 Salary — Regular Disbursement',
       },
       {
-        userId: alex._id,
+        userId: ananya._id,
         month: 7,
         year: 2026,
-        basicSalary: 75000,
-        hra: 25000,
-        allowances: 15000,
-        deductions: { tax: 9000, pf: 4500, unpaidLeaveDeduction: 0, other: 500 },
+        basicSalary: 70000,
+        hra: 28000,
+        allowances: 18000,
+        deductions: { tax: 7800, pf: 4200, unpaidLeaveDeduction: 0, other: 0 },
+        grossSalary: 116000,
+        netSalary: 104000,
         paymentStatus: 'Paid',
         paymentDate: new Date('2026-07-31'),
         remarks: 'July 2026 Salary',
       },
-      // Elena Rostova (Lead Designer)
+      // Rohan Nair (Lead UI/UX Designer)
       {
-        userId: elena._id,
+        userId: rohan._id,
+        month: 8,
+        year: 2026,
+        basicSalary: 60000,
+        hra: 24000,
+        allowances: 14000,
+        deductions: { tax: 5400, pf: 3600, unpaidLeaveDeduction: 0, other: 0 },
+        grossSalary: 98000,
+        netSalary: 89000,
+        paymentStatus: 'Paid',
+        paymentDate: new Date('2026-08-31'),
+        remarks: 'August 2026 Salary',
+      },
+      // Arjun Menon (Marketing Director)
+      {
+        userId: arjun._id,
+        month: 8,
+        year: 2026,
+        basicSalary: 75000,
+        hra: 30000,
+        allowances: 20000,
+        deductions: { tax: 8500, pf: 4500, unpaidLeaveDeduction: 0, other: 0 },
+        grossSalary: 125000,
+        netSalary: 112000,
+        paymentStatus: 'Paid',
+        paymentDate: new Date('2026-08-31'),
+        remarks: 'August 2026 Salary',
+      },
+      // Sneha Kulkarni (Financial Controller)
+      {
+        userId: sneha._id,
         month: 8,
         year: 2026,
         basicSalary: 65000,
-        hra: 22000,
-        allowances: 12000,
-        deductions: { tax: 7500, pf: 3800, unpaidLeaveDeduction: 0, other: 0 },
+        hra: 26000,
+        allowances: 15000,
+        deductions: { tax: 6100, pf: 3900, unpaidLeaveDeduction: 0, other: 0 },
+        grossSalary: 106000,
+        netSalary: 96000,
         paymentStatus: 'Paid',
         paymentDate: new Date('2026-08-31'),
         remarks: 'August 2026 Salary',
       },
-      // Marcus Vance (Growth Marketing)
+      // Karthik Reddy (DevOps & Cloud Engineer)
       {
-        userId: marcus._id,
+        userId: karthik._id,
         month: 8,
         year: 2026,
-        basicSalary: 55000,
-        hra: 18000,
-        allowances: 10000,
-        deductions: { tax: 6000, pf: 3000, unpaidLeaveDeduction: 0, other: 0 },
+        basicSalary: 68000,
+        hra: 27200,
+        allowances: 16800,
+        deductions: { tax: 6920, pf: 4080, unpaidLeaveDeduction: 0, other: 0 },
+        grossSalary: 112000,
+        netSalary: 101000,
         paymentStatus: 'Paid',
         paymentDate: new Date('2026-08-31'),
         remarks: 'August 2026 Salary',
       },
-      // Sarah Jenkins (HR Director)
+      // Priya Iyer (HR Manager)
       {
-        userId: adminUser._id,
+        userId: priya._id,
         month: 8,
         year: 2026,
-        basicSalary: 90000,
-        hra: 30000,
-        allowances: 20000,
-        deductions: { tax: 12000, pf: 5000, unpaidLeaveDeduction: 0, other: 0 },
+        basicSalary: 80000,
+        hra: 32000,
+        allowances: 22000,
+        deductions: { tax: 9200, pf: 4800, unpaidLeaveDeduction: 0, other: 0 },
+        grossSalary: 134000,
+        netSalary: 120000,
         paymentStatus: 'Paid',
         paymentDate: new Date('2026-08-31'),
         remarks: 'August 2026 Salary',
@@ -321,10 +435,12 @@ const seedDatabase = async (disconnectWhenDone = true) => {
     console.log('✅ Dayflow HRMS Database seeded successfully!');
     console.log('----------------------------------------------------');
     console.log('🔑 DEMO CREDENTIALS:');
-    console.log('👑 Admin/HR : admin@dayflow.com / admin123');
-    console.log('🧑 Employee : alex@dayflow.com  / employee123');
-    console.log('🧑 Employee : elena@dayflow.com / employee123');
-    console.log('🧑 Employee : marcus@dayflow.com / employee123');
+    console.log('👑 Admin/HR : admin@dayflow.com / admin123 (Priya Iyer - HR Manager)');
+    console.log('🧑 Employee : alex@dayflow.com  / employee123 (Ananya Sharma - Senior Dev)');
+    console.log('🧑 Employee : elena@dayflow.com / employee123 (Rohan Nair - Lead UI/UX)');
+    console.log('🧑 Employee : marcus@dayflow.com / employee123 (Arjun Menon - Marketing Dir)');
+    console.log('🧑 Employee : sneha@dayflow.com / employee123 (Sneha Kulkarni - Finance)');
+    console.log('🧑 Employee : karthik@dayflow.com / employee123 (Karthik Reddy - DevOps)');
     console.log('----------------------------------------------------');
 
     if (disconnectWhenDone) {
