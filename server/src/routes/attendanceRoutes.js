@@ -20,6 +20,7 @@ router.post('/check-out', checkOut);
 router.get('/today', getTodayStatus);
 router.get('/my-history', getMyAttendanceHistory);
 router.get('/my-weekly', getMyWeeklyView);
+router.get('/weekly-view', getMyWeeklyView);
 
 // Admin oversight & management
 router.get('/all', authorize('admin'), getAllAttendance);

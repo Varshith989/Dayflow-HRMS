@@ -186,13 +186,12 @@ const ProfilePage = () => {
   };
 
   const avatarOptions = [
-    { name: 'Ananya (Engineering)', uri: demoAvatars.ananya },
-    { name: 'Priya (HR Lead)', uri: demoAvatars.priya },
-    { name: 'Rohan (Product Design)', uri: demoAvatars.rohan },
-    { name: 'Arjun (Marketing)', uri: demoAvatars.arjun },
-    { name: 'Sneha (Finance)', uri: demoAvatars.sneha },
-    { name: 'Karthik (DevOps)', uri: demoAvatars.karthik },
-    { name: 'Initials (Brand Violet)', uri: demoAvatars.generic(user?.name?.slice(0, 2) || 'DF') },
+    { name: 'Ananya Sharma (Senior Engineer)', uri: demoAvatars.ananya, role: 'Engineering' },
+    { name: 'Priya Iyer (HR Manager)', uri: demoAvatars.priya, role: 'Human Resources' },
+    { name: 'Rohan Nair (Lead Designer)', uri: demoAvatars.rohan, role: 'UI/UX Design' },
+    { name: 'Arjun Menon (Marketing Lead)', uri: demoAvatars.arjun, role: 'Marketing' },
+    { name: 'Sneha Kulkarni (Finance Lead)', uri: demoAvatars.sneha, role: 'Finance' },
+    { name: 'Karthik Reddy (DevOps Lead)', uri: demoAvatars.karthik, role: 'DevOps & Infra' },
   ];
 
   const formattedJoiningDate = user?.joiningDate
