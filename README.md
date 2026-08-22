@@ -1,4 +1,4 @@
-# WorkZen – Human Resource Management System
+﻿# WorkZen – Human Resource Management System
 
 **Human Resource Management System – Odoo × NMIT Hackathon 2026**
 
