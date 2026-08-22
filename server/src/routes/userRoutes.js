@@ -16,6 +16,12 @@ router.route('/')
   .get(authorize('admin'), getAllEmployees)
   .post(authorize('admin'), createEmployee);
 
+// Shortcut for user updating own profile
+router.put('/profile', (req, res) => {
+  req.params.id = req.user._id.toString();
+  return updateEmployee(req, res);
+});
+
 router.route('/:id')
   .get(getEmployeeById)
   .put(updateEmployee)
