@@ -4,6 +4,8 @@
 
 > **Work smarter. Stay in sync.**
 
+🎥 **[Watch the WorkZen HRMS Demo](https://drive.google.com/file/d/1hB2gaCk_wwG7-I0srsbiXYJldaPYbU1e/view?usp=drivesdk)**
+
 WorkZen is a full-stack Human Resource Management System (HRMS) designed to digitize, centralize, and streamline core workforce workflows — including employee management, attendance, leave, payroll, profile management, and compliance documents — through an intuitive role-based portal.
 
 ---
