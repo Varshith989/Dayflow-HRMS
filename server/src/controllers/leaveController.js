@@ -124,7 +124,7 @@ const applyLeave = async (req, res) => {
 // @access  Private
 const getMyLeaves = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = (req.user.role === 'admin' && req.query.userId) ? req.query.userId : req.user._id;
 
     const user = await User.findById(userId).select('leaveBalance name employeeId');
     const leaves = await Leave.find({ userId })

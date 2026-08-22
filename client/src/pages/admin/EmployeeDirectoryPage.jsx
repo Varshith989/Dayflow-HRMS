@@ -18,8 +18,12 @@ import api from '../../api/client';
 import { useToast } from '../../context/ToastContext';
 import demoAvatars from '../../utils/avatars';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
+import { useEmployeeInspection } from '../../context/EmployeeInspectionContext';
 
 const EmployeeDirectoryPage = () => {
+  const navigate = useNavigate();
+  const { selectEmployee } = useEmployeeInspection();
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -374,14 +378,26 @@ const EmployeeDirectoryPage = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
+                          type="button"
+                          onClick={() => {
+                            selectEmployee(emp, 'dashboard');
+                            navigate('/admin/employee-view');
+                          }}
+                          title="Inspect Full Employee Context"
+                          className="px-2.5 py-1.5 rounded-lg bg-brand-500/10 hover:bg-brand-500 text-brand-700 dark:text-brand-300 hover:text-white border border-brand-500/30 text-xs font-bold transition-all shadow-xs flex items-center gap-1"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Context</span>
+                        </button>
+                        <button
                           onClick={() => {
                             setSelectedEmployee(emp);
                             setShowViewModal(true);
                           }}
-                          title="View Profile"
+                          title="Quick View Modal"
                           className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Users className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => {

@@ -10,21 +10,33 @@ import {
   Shield,
   CheckCircle2,
   ArrowRight,
-  ExternalLink,
+  User,
+  Clock,
+  FileText,
+  LayoutDashboard,
+  Eye,
 } from 'lucide-react';
 import api from '../../api/client';
 import demoAvatars from '../../utils/avatars';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useEmployeeInspection } from '../../context/EmployeeInspectionContext';
 
 const AdminEmployeeSwitcher = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [search, setSearch] = useState('');
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
 
+  const {
+    inspectedEmployee,
+    selectEmployee,
+    clearInspectedEmployee,
+    setActiveTab,
+  } = useEmployeeInspection();
+
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Close dropdown on clicking outside
   useEffect(() => {
@@ -73,13 +85,26 @@ const AdminEmployeeSwitcher = () => {
     );
   });
 
-  const handleSelectEmployee = (emp) => {
-    setSelectedEmployee(emp);
+  const handleSelectEmployee = (emp, tab = 'dashboard') => {
+    selectEmployee(emp, tab);
+    setIsOpen(false);
+    navigate('/admin/employee-view');
   };
 
-  const handleNavigate = (path) => {
+  const handleQuickTabJump = (tab) => {
+    if (inspectedEmployee) {
+      setActiveTab(tab);
+      setIsOpen(false);
+      navigate('/admin/employee-view');
+    }
+  };
+
+  const handleExitInspection = () => {
+    clearInspectedEmployee();
     setIsOpen(false);
-    navigate(path);
+    if (location.pathname === '/admin/employee-view') {
+      navigate('/admin');
+    }
   };
 
   return (
@@ -89,21 +114,27 @@ const AdminEmployeeSwitcher = () => {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm ${
-          selectedEmployee
-            ? 'bg-brand-500/10 border-brand-500/30 text-brand-600 dark:text-brand-300'
+          inspectedEmployee
+            ? 'bg-gradient-to-r from-brand-600 to-indigo-600 border-brand-400 text-white shadow-glow'
             : 'bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700/80'
         }`}
       >
-        <Users className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+        {inspectedEmployee ? (
+          <Eye className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+        ) : (
+          <Users className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+        )}
         <span className="hidden sm:inline">
-          {selectedEmployee ? `Selected: ${selectedEmployee.name.split(' ')[0]}` : 'Switch Employee'}
+          {inspectedEmployee
+            ? `Viewing: ${inspectedEmployee.name.split(' ')[0]}`
+            : 'Switch Employee'}
         </span>
         <ChevronDown
           className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
-      {/* Modern Popover Dropdown Card (Anchored directly below button) */}
+      {/* Modern Popover Dropdown Card */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl z-50 p-3.5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-150">
           {/* Header */}
@@ -125,7 +156,7 @@ const AdminEmployeeSwitcher = () => {
               autoFocus
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, ID or department..."
+              placeholder="Search employee by name, ID or dept..."
               className="w-full pl-8 pr-7 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
             />
             {search && (
@@ -139,68 +170,93 @@ const AdminEmployeeSwitcher = () => {
             )}
           </div>
 
-          {/* Selected Employee Quick Action Card */}
-          {selectedEmployee && (
-            <div className="p-3 rounded-xl bg-brand-50/60 dark:bg-brand-950/40 border border-brand-200/80 dark:border-brand-900/60 space-y-2.5 animate-in fade-in duration-150">
+          {/* Currently Inspected Employee Quick Jump Card */}
+          {inspectedEmployee && (
+            <div className="p-3 rounded-xl bg-brand-50/70 dark:bg-brand-950/40 border border-brand-200/80 dark:border-brand-900/60 space-y-2.5 animate-in fade-in duration-150">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <img
-                    src={selectedEmployee.avatar || demoAvatars.generic(selectedEmployee.name)}
-                    alt={selectedEmployee.name}
+                    src={inspectedEmployee.avatar || demoAvatars.generic(inspectedEmployee.name)}
+                    alt={inspectedEmployee.name}
                     className="w-9 h-9 rounded-xl object-cover border border-brand-300 dark:border-brand-700 shrink-0"
                   />
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                      {selectedEmployee.name}
+                      {inspectedEmployee.name}
                     </div>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                      {selectedEmployee.employeeId} • {selectedEmployee.department}
+                      {inspectedEmployee.employeeId} • {inspectedEmployee.department}
                     </div>
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => setSelectedEmployee(null)}
-                  title="Clear selection"
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors"
+                  onClick={handleExitInspection}
+                  title="Exit Employee View"
+                  className="px-2 py-1 rounded-lg bg-rose-500/15 text-rose-700 dark:text-rose-300 hover:bg-rose-500 hover:text-white text-[10px] font-bold transition-colors flex items-center gap-1"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3 h-3" />
+                  <span>Exit View</span>
                 </button>
               </div>
 
-              {/* Direct Jump Navigation Actions */}
-              <div className="grid grid-cols-3 gap-1.5 pt-1">
+              {/* 6 Quick Action Navigation Buttons */}
+              <div className="grid grid-cols-3 gap-1.5 pt-1 text-[10px] font-semibold">
                 <button
                   type="button"
-                  onClick={() => handleNavigate('/admin/attendance')}
-                  className="px-2 py-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 border border-slate-200 dark:border-slate-800 text-[10px] font-semibold text-slate-700 dark:text-slate-300 transition-all flex items-center justify-center gap-1 shadow-xs group"
+                  onClick={() => handleQuickTabJump('dashboard')}
+                  className="p-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 transition-all flex items-center justify-center gap-1 shadow-xs group"
                 >
-                  <Calendar className="w-3 h-3 text-brand-500 group-hover:text-white" />
+                  <LayoutDashboard className="w-3 h-3 text-brand-500 group-hover:text-white" />
+                  <span>Dashboard</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickTabJump('profile')}
+                  className="p-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 transition-all flex items-center justify-center gap-1 shadow-xs group"
+                >
+                  <User className="w-3 h-3 text-brand-500 group-hover:text-white" />
+                  <span>Profile</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickTabJump('attendance')}
+                  className="p-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-emerald-500 hover:text-white dark:hover:bg-emerald-600 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 transition-all flex items-center justify-center gap-1 shadow-xs group"
+                >
+                  <Clock className="w-3 h-3 text-emerald-500 group-hover:text-white" />
                   <span>Attendance</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleNavigate('/admin/leaves')}
-                  className="px-2 py-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-emerald-500 hover:text-white dark:hover:bg-emerald-600 border border-slate-200 dark:border-slate-800 text-[10px] font-semibold text-slate-700 dark:text-slate-300 transition-all flex items-center justify-center gap-1 shadow-xs group"
+                  onClick={() => handleQuickTabJump('leaves')}
+                  className="p-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-amber-500 hover:text-white dark:hover:bg-amber-600 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 transition-all flex items-center justify-center gap-1 shadow-xs group"
                 >
-                  <HeartHandshake className="w-3 h-3 text-emerald-500 group-hover:text-white" />
+                  <HeartHandshake className="w-3 h-3 text-amber-500 group-hover:text-white" />
                   <span>Leaves</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleNavigate('/admin/payroll')}
-                  className="px-2 py-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-600 border border-slate-200 dark:border-slate-800 text-[10px] font-semibold text-slate-700 dark:text-slate-300 transition-all flex items-center justify-center gap-1 shadow-xs group"
+                  onClick={() => handleQuickTabJump('payroll')}
+                  className="p-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-indigo-500 hover:text-white dark:hover:bg-indigo-600 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 transition-all flex items-center justify-center gap-1 shadow-xs group"
                 >
                   <DollarSign className="w-3 h-3 text-indigo-500 group-hover:text-white" />
                   <span>Payroll</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickTabJump('documents')}
+                  className="p-1.5 rounded-lg bg-white dark:bg-slate-900 hover:bg-purple-500 hover:text-white dark:hover:bg-purple-600 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 transition-all flex items-center justify-center gap-1 shadow-xs group"
+                >
+                  <FileText className="w-3 h-3 text-purple-500 group-hover:text-white" />
+                  <span>Documents</span>
                 </button>
               </div>
             </div>
           )}
 
           {/* Scrollable Employee List */}
-          <div className="max-h-60 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+          <div className="max-h-56 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
             {loading ? (
               <div className="p-5 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
                 <div className="w-3.5 h-3.5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
@@ -210,7 +266,7 @@ const AdminEmployeeSwitcher = () => {
               <div className="p-5 text-center text-xs text-slate-400">No employees match search.</div>
             ) : (
               filteredEmployees.map((emp) => {
-                const isSelected = selectedEmployee?._id === emp._id;
+                const isSelected = inspectedEmployee?._id === emp._id;
                 return (
                   <button
                     key={emp._id}
@@ -248,7 +304,11 @@ const AdminEmployeeSwitcher = () => {
                       <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400">
                         {emp.employeeId}
                       </span>
-                      {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-brand-500 shrink-0" />}
+                      {isSelected ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-brand-500 shrink-0" />
+                      ) : (
+                        <ArrowRight className="w-3 h-3 text-slate-300 group-hover:text-brand-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      )}
                     </div>
                   </button>
                 );
@@ -260,10 +320,13 @@ const AdminEmployeeSwitcher = () => {
           <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
             <button
               type="button"
-              onClick={() => handleNavigate('/admin/employees')}
+              onClick={() => {
+                setIsOpen(false);
+                navigate('/admin/employees');
+              }}
               className="text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
             >
-              <span>Manage Full Directory</span>
+              <span>Full Directory</span>
               <ArrowRight className="w-3 h-3" />
             </button>
 

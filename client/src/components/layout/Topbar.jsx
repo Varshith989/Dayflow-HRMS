@@ -19,6 +19,7 @@ const Topbar = ({ onMenuClick }) => {
 
   const getPageTitle = () => {
     const path = location.pathname;
+    if (path.includes('/employee-view')) return 'Employee Context Inspection';
     if (path === '/admin' || path === '/employee') return 'Dashboard Overview';
     if (path.includes('/employees')) return 'Employee Directory & Onboarding';
     if (path.includes('/attendance')) return isAdmin ? 'Company Attendance Feed' : 'My Daily Attendance';

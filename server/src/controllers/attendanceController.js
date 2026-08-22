@@ -139,7 +139,7 @@ const checkOut = async (req, res) => {
 // @access  Private
 const getTodayStatus = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = (req.user.role === 'admin' && req.query.userId) ? req.query.userId : req.user._id;
     const todayStr = getTodayDateStr();
 
     const attendance = await Attendance.findOne({ userId, date: todayStr });
@@ -166,7 +166,7 @@ const getTodayStatus = async (req, res) => {
 // @access  Private
 const getMyAttendanceHistory = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = (req.user.role === 'admin' && req.query.userId) ? req.query.userId : req.user._id;
     const { month, year, limit = 30 } = req.query;
 
     const query = { userId };
@@ -215,7 +215,7 @@ const getMyAttendanceHistory = async (req, res) => {
 // @access  Private
 const getMyWeeklyView = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = (req.user.role === 'admin' && req.query.userId) ? req.query.userId : req.user._id;
     const today = new Date();
     const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday start
     const weekEnd = endOfWeek(today, { weekStartsOn: 1 }); // Sunday end

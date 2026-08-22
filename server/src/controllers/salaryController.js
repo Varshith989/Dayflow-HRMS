@@ -29,7 +29,7 @@ const computeSalaryTotals = (data) => {
 // @access  Private (Employee / Admin for self)
 const getMyPayslips = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = (req.user.role === 'admin' && req.query.userId) ? req.query.userId : req.user._id;
 
     const payslips = await Salary.find({ userId })
       .populate('userId', 'name employeeId email department designation avatar joiningDate')
