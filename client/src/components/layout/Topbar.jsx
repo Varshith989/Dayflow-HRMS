@@ -25,7 +25,7 @@ const Topbar = ({ onMenuClick }) => {
     if (path.includes('/leaves')) return isAdmin ? 'Leave Management & Approvals' : 'Time Off & Leave Portal';
     if (path.includes('/payroll') || path.includes('/salary')) return isAdmin ? 'Payroll Management' : 'My Monthly Payslips';
     if (path.includes('/profile')) return 'My Personal & Work Profile';
-    return 'Dayflow Portal';
+    return 'WorkZen Portal';
   };
 
   return (
@@ -44,7 +44,7 @@ const Topbar = ({ onMenuClick }) => {
             {getPageTitle()}
           </h1>
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <span>Dayflow</span>
+            <span>WorkZen</span>
             <span>•</span>
             <span className="capitalize">{user?.role} Workspace</span>
           </div>

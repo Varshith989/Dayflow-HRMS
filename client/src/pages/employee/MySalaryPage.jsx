@@ -12,6 +12,7 @@ import {
 import api from '../../api/client';
 import { useToast } from '../../context/ToastContext';
 import { format } from 'date-fns';
+import { WorkZenIcon } from '../../components/common/WorkZenLogo';
 
 const MySalaryPage = () => {
   const [payslips, setPayslips] = useState([]);
@@ -184,12 +185,10 @@ const MySalaryPage = () => {
             {/* Payslip Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-glow">
-                  <Sparkles className="w-6 h-6 text-white" />
-                </div>
+                <WorkZenIcon size={44} />
                 <div>
                   <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                    Dayflow Technologies Pvt. Ltd.
+                    WorkZen Technologies Pvt. Ltd.
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     Salary Statement for {getMonthName(selectedPayslip.month)}{' '}
@@ -200,7 +199,7 @@ const MySalaryPage = () => {
 
               <div className="text-right">
                 <span className="text-xs font-mono font-bold px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-brand-700 dark:text-brand-300">
-                  SLIP-REF: DF-{selectedPayslip.year}{String(selectedPayslip.month).padStart(2, '0')}-{selectedPayslip.userId?.employeeId || 'EMP'}
+                  SLIP-REF: WZ-{selectedPayslip.year}{String(selectedPayslip.month).padStart(2, '0')}-{selectedPayslip.userId?.employeeId || 'EMP'}
                 </span>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">Confidential Compensation Document</p>
               </div>

@@ -269,7 +269,7 @@ const karthikSvg = `
 `;
 
 // 7. Generic / Alternate Professional Avatar Generator
-const generateGenericAvatar = (name = 'Dayflow Team') => {
+const generateGenericAvatar = (name = 'WorkZen Team') => {
   const charCode = (name && name.charCodeAt(0)) || 65;
   if (charCode % 2 === 0) {
     return svgToDataUri(ananyaSvg);

@@ -23,6 +23,7 @@ import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../api/client';
 import demoAvatars from '../utils/avatars';
+import WorkZenLogo from '../components/common/WorkZenLogo';
 
 const LoginPage = () => {
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'signup' | 'verify'
@@ -86,7 +87,7 @@ const LoginPage = () => {
       if (res.data.success) {
         localStorage.setItem('dayflow_token', res.data.token);
         localStorage.setItem('dayflow_user', JSON.stringify(res.data.user));
-        toast.success(`Welcome to Dayflow, ${res.data.user.name}!`);
+        toast.success(`Welcome to WorkZen, ${res.data.user.name}!`);
 
         const targetRoute =
           location.state?.from?.pathname ||
@@ -188,17 +189,7 @@ const LoginPage = () => {
       {/* Header bar */}
       <header className="relative z-10 px-6 py-4 border-b border-slate-200 dark:border-slate-800/60 bg-white/70 dark:bg-slate-950/40 backdrop-blur-md transition-colors duration-200">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-glow">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white">Dayflow</span>
-              <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-md bg-brand-500/15 text-brand-600 dark:text-brand-300 border border-brand-500/30">
-                HRMS
-              </span>
-            </div>
-          </div>
+          <WorkZenLogo iconSize={36} showTagline={false} />
 
           <div className="flex items-center gap-3">
             <button
@@ -267,10 +258,10 @@ const LoginPage = () => {
               <>
                 <div className="mb-6">
                   <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                    Sign in to Dayflow
+                    Sign in to WorkZen
                   </h2>
                   <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">
-                    Workplace attendance, leave management, and payroll intelligence.
+                    Work smarter. Stay in sync.
                   </p>
                 </div>
 
@@ -289,7 +280,7 @@ const LoginPage = () => {
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="e.g. admin@dayflow.com"
+                        placeholder="e.g. yourname@company.com"
                         className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
                       />
                     </div>
@@ -349,7 +340,7 @@ const LoginPage = () => {
               <>
                 <div className="mb-5">
                   <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                    Create Dayflow Account
+                    Create WorkZen Account
                   </h2>
                   <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">
                     Register a new Employee or HR Administrator identity.
@@ -690,7 +681,7 @@ const LoginPage = () => {
 
       {/* Footer */}
       <footer className="relative z-10 px-6 py-4 text-center text-xs text-slate-500 dark:text-slate-500 border-t border-slate-200 dark:border-slate-900 bg-white/60 dark:bg-slate-950/60">
-        Dayflow HRMS • Odoo x NMIT Hackathon 2026 • Made with ❤️ in India
+        WorkZen HRMS • Odoo × NMIT Hackathon 2026 • Made with ❤️ in India
       </footer>
     </div>
   );

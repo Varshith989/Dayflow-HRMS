@@ -414,7 +414,7 @@ const EmployeeDirectoryPage = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white">Onboard New Employee</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Add team member to Dayflow workforce</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Add team member to WorkZen workforce</p>
                 </div>
               </div>
               <button
@@ -446,7 +446,7 @@ const EmployeeDirectoryPage = () => {
                     required
                     value={newEmployee.email}
                     onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
-                    placeholder="ramesh@dayflow.com"
+                    placeholder="ramesh@workzen.com"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
                   />
                 </div>

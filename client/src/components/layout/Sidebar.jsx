@@ -8,12 +8,12 @@ import {
   DollarSign,
   UserCircle,
   LogOut,
-  Sparkles,
   ChevronRight,
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { WorkZenIcon } from '../common/WorkZenLogo';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout, isAdmin } = useAuth();
@@ -22,7 +22,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const handleLogout = async () => {
     await logout();
-    toast.info('Logged out of Dayflow');
+    toast.info('Logged out of WorkZen');
     navigate('/login');
   };
 
@@ -65,12 +65,12 @@ const Sidebar = ({ isOpen, onClose }) => {
         <div>
           <div className="p-6 flex items-center justify-between border-b border-slate-200 dark:border-slate-800/60">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-glow">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
+              <WorkZenIcon size={38} />
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-lg font-black tracking-tight text-slate-900 dark:text-white">Dayflow</span>
+                  <span className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
+                    Work<span className="text-brand-600 dark:text-brand-400">Zen</span>
+                  </span>
                   <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-brand-500/15 text-brand-600 dark:text-brand-300 border border-brand-500/25">
                     HRMS
                   </span>
