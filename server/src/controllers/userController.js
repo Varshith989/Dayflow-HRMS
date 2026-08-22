@@ -155,13 +155,23 @@ const createEmployee = async (req, res) => {
       name,
       email: email.toLowerCase().trim(),
       password: userPassword,
-      role,
+      role: role || 'employee',
       department,
       designation,
       phone: phone || '',
       joiningDate: joiningDate ? new Date(joiningDate) : new Date(),
       avatar: avatar || avatars.generic(name.slice(0, 2).toUpperCase()),
       status: 'Active',
+      isVerified: true,
+      documents: [
+        {
+          name: `${name.replace(/\s+/g, '_')}_Appointment_Letter.pdf`,
+          type: 'Offer Letter',
+          fileSize: '1.2 MB',
+          status: 'Verified',
+          uploadedAt: new Date(),
+        },
+      ],
       address: address || {},
       emergencyContact: emergencyContact || {},
       leaveBalance: leaveBalance || { paid: 14, sick: 7, unpaid: 0 },
@@ -302,10 +312,191 @@ const deleteEmployee = async (req, res) => {
   }
 };
 
+// @desc    Get employee documents
+// @route   GET /api/users/:id/documents
+// @access  Private (Self or Admin)
+const getUserDocuments = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isSelf = req.user._id.toString() === id;
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isSelf && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. You can only view your own documents.',
+      });
+    }
+
+    const employee = await User.findById(id);
+    if (!employee) {
+      return res.status(404).json({ success: false, message: 'Employee not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      documents: employee.documents || [],
+    });
+  } catch (error) {
+    console.error('Get Documents Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve documents',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Add employee document
+// @route   POST /api/users/:id/documents
+// @access  Private (Self or Admin)
+const addUserDocument = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isSelf = req.user._id.toString() === id;
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isSelf && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. You can only add documents to your own profile.',
+      });
+    }
+
+    const { name, type, fileSize } = req.body;
+    if (!name || !type) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide document name and type',
+      });
+    }
+
+    const employee = await User.findById(id);
+    if (!employee) {
+      return res.status(404).json({ success: false, message: 'Employee not found' });
+    }
+
+    const newDoc = {
+      name: name.trim(),
+      type: type.trim(),
+      fileSize: fileSize || '1.2 MB',
+      status: isAdmin ? 'Verified' : 'Pending Verification',
+      uploadedAt: new Date(),
+    };
+
+    if (!employee.documents) employee.documents = [];
+    employee.documents.push(newDoc);
+    await employee.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Document added successfully',
+      document: employee.documents[employee.documents.length - 1],
+      documents: employee.documents,
+    });
+  } catch (error) {
+    console.error('Add Document Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to add document',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Delete employee document
+// @route   DELETE /api/users/:id/documents/:docId
+// @access  Private (Self or Admin)
+const deleteUserDocument = async (req, res) => {
+  try {
+    const { id, docId } = req.params;
+    const isSelf = req.user._id.toString() === id;
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isSelf && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. You can only manage your own documents.',
+      });
+    }
+
+    const employee = await User.findById(id);
+    if (!employee) {
+      return res.status(404).json({ success: false, message: 'Employee not found' });
+    }
+
+    employee.documents = (employee.documents || []).filter(
+      (d) => d._id.toString() !== docId
+    );
+    await employee.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Document deleted successfully',
+      documents: employee.documents,
+    });
+  } catch (error) {
+    console.error('Delete Document Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete document',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Verify or update document status (Admin only)
+// @route   PUT /api/users/:id/documents/:docId/status
+// @access  Private (Admin only)
+const verifyUserDocument = async (req, res) => {
+  try {
+    const { id, docId } = req.params;
+    const { status } = req.body;
+
+    if (!['Verified', 'Pending Verification', 'Rejected'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid document status',
+      });
+    }
+
+    const employee = await User.findById(id);
+    if (!employee) {
+      return res.status(404).json({ success: false, message: 'Employee not found' });
+    }
+
+    const doc = (employee.documents || []).find((d) => d._id.toString() === docId);
+    if (!doc) {
+      return res.status(404).json({ success: false, message: 'Document not found' });
+    }
+
+    doc.status = status;
+    await employee.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Document status updated to ${status}`,
+      document: doc,
+      documents: employee.documents,
+    });
+  } catch (error) {
+    console.error('Verify Document Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update document status',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllEmployees,
   getEmployeeById,
   createEmployee,
   updateEmployee,
   deleteEmployee,
+  getUserDocuments,
+  addUserDocument,
+  deleteUserDocument,
+  verifyUserDocument,
 };

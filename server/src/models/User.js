@@ -76,6 +76,32 @@ const userSchema = new mongoose.Schema(
       sick: { type: Number, default: 8 },
       unpaid: { type: Number, default: 0 },
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+      default: null,
+    },
+    verificationTokenExpires: {
+      type: Date,
+      default: null,
+    },
+    documents: [
+      {
+        name: { type: String, required: true },
+        type: { type: String, required: true },
+        fileUrl: { type: String, default: '' },
+        fileSize: { type: String, default: '1.2 MB' },
+        status: {
+          type: String,
+          enum: ['Verified', 'Pending Verification', 'Rejected'],
+          default: 'Verified',
+        },
+        uploadedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   {
     timestamps: true,

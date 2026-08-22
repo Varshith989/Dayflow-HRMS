@@ -42,6 +42,12 @@ const seedDatabase = async (disconnectWhenDone = true) => {
           relation: 'Spouse',
           phone: '+91 98450 12349',
         },
+        isVerified: true,
+        documents: [
+          { name: 'Priya_Iyer_Appointment_Letter.pdf', type: 'Offer Letter', fileSize: '1.4 MB', status: 'Verified', uploadedAt: new Date('2023-01-10') },
+          { name: 'Govt_ID_Aadhaar_Priya.pdf', type: 'Government ID', fileSize: '0.9 MB', status: 'Verified', uploadedAt: new Date('2023-01-11') },
+          { name: 'MBA_Degree_Certificate.pdf', type: 'Educational Certificate', fileSize: '2.2 MB', status: 'Verified', uploadedAt: new Date('2023-01-12') },
+        ],
         leaveBalance: { paid: 18, sick: 10, unpaid: 0 },
       },
       {
@@ -56,6 +62,13 @@ const seedDatabase = async (disconnectWhenDone = true) => {
         joiningDate: new Date('2023-03-15'),
         avatar: demoAvatars.ananya,
         status: 'Active',
+        isVerified: true,
+        documents: [
+          { name: 'Ananya_Sharma_Offer_Letter.pdf', type: 'Offer Letter', fileSize: '1.2 MB', status: 'Verified', uploadedAt: new Date('2023-03-15') },
+          { name: 'Aadhaar_Card_Ananya.pdf', type: 'Government ID', fileSize: '0.7 MB', status: 'Verified', uploadedAt: new Date('2023-03-16') },
+          { name: 'BTech_Degree_Cert_CS.pdf', type: 'Educational Certificate', fileSize: '1.8 MB', status: 'Verified', uploadedAt: new Date('2023-03-16') },
+          { name: 'Form16_Tax_Declaration_2025.pdf', type: 'Tax Declaration', fileSize: '2.4 MB', status: 'Verified', uploadedAt: new Date('2026-04-05') },
+        ],
         address: {
           street: '15 Green Meadows, Koramangala 4th Block',
           city: 'Bengaluru',
@@ -81,6 +94,12 @@ const seedDatabase = async (disconnectWhenDone = true) => {
         joiningDate: new Date('2023-06-01'),
         avatar: demoAvatars.rohan,
         status: 'Active',
+        isVerified: true,
+        documents: [
+          { name: 'Rohan_Nair_Appointment_Letter.pdf', type: 'Offer Letter', fileSize: '1.1 MB', status: 'Verified', uploadedAt: new Date('2023-06-01') },
+          { name: 'PAN_Card_Rohan.pdf', type: 'Government ID', fileSize: '0.6 MB', status: 'Verified', uploadedAt: new Date('2023-06-02') },
+          { name: 'Design_Portfolio_Cert.pdf', type: 'Educational Certificate', fileSize: '3.1 MB', status: 'Verified', uploadedAt: new Date('2023-06-02') },
+        ],
         address: {
           street: '45 Palm Avenue, HSR Layout Sector 1',
           city: 'Bengaluru',
@@ -106,6 +125,11 @@ const seedDatabase = async (disconnectWhenDone = true) => {
         joiningDate: new Date('2022-11-10'),
         avatar: demoAvatars.arjun,
         status: 'Active',
+        isVerified: true,
+        documents: [
+          { name: 'Arjun_Menon_Executive_Offer.pdf', type: 'Offer Letter', fileSize: '1.5 MB', status: 'Verified', uploadedAt: new Date('2022-11-10') },
+          { name: 'Passport_Copy_Arjun.pdf', type: 'Government ID', fileSize: '1.8 MB', status: 'Verified', uploadedAt: new Date('2022-11-11') },
+        ],
         address: {
           street: '202 Marine Lines, Nariman Point',
           city: 'Mumbai',
@@ -131,6 +155,11 @@ const seedDatabase = async (disconnectWhenDone = true) => {
         joiningDate: new Date('2023-01-20'),
         avatar: demoAvatars.sneha,
         status: 'Active',
+        isVerified: true,
+        documents: [
+          { name: 'Sneha_Kulkarni_Offer_Letter.pdf', type: 'Offer Letter', fileSize: '1.3 MB', status: 'Verified', uploadedAt: new Date('2023-01-20') },
+          { name: 'CA_Chartered_Accountant_Cert.pdf', type: 'Educational Certificate', fileSize: '2.5 MB', status: 'Verified', uploadedAt: new Date('2023-01-21') },
+        ],
         address: {
           street: '14 FC Road, Shivaji Nagar',
           city: 'Pune',
@@ -156,6 +185,11 @@ const seedDatabase = async (disconnectWhenDone = true) => {
         joiningDate: new Date('2023-08-01'),
         avatar: demoAvatars.karthik,
         status: 'Active',
+        isVerified: true,
+        documents: [
+          { name: 'Karthik_Reddy_Offer_Letter.pdf', type: 'Offer Letter', fileSize: '1.2 MB', status: 'Verified', uploadedAt: new Date('2023-08-01') },
+          { name: 'AWS_Solutions_Architect_Cert.pdf', type: 'Educational Certificate', fileSize: '1.6 MB', status: 'Verified', uploadedAt: new Date('2023-08-02') },
+        ],
         address: {
           street: '78 HITEC City Main Road, Madhapur',
           city: 'Hyderabad',

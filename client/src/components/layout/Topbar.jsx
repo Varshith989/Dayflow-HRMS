@@ -4,6 +4,7 @@ import { Menu, Sun, Moon, Shield, User, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { format } from 'date-fns';
+import AdminEmployeeSwitcher from '../admin/AdminEmployeeSwitcher';
 
 const Topbar = ({ onMenuClick }) => {
   const { user, isAdmin } = useAuth();
@@ -50,8 +51,11 @@ const Topbar = ({ onMenuClick }) => {
         </div>
       </div>
 
-      {/* Right: Theme Toggle, Clock, Role Badge, and Profile Link */}
-      <div className="flex items-center gap-2.5 sm:gap-4">
+      {/* Right: Admin Employee Switcher, Theme Toggle, Clock, Role Badge, and Profile Link */}
+      <div className="flex items-center gap-2 sm:gap-3.5">
+        {/* Admin Employee Context Switcher */}
+        {isAdmin && <AdminEmployeeSwitcher />}
+
         {/* Real-time Clock */}
         <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-xs font-mono text-slate-700 dark:text-slate-300">
           <Clock className="w-3.5 h-3.5 text-brand-500 dark:text-brand-400" />

@@ -1,22 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Sparkles, Shield, User, Lock, ArrowRight, Eye, EyeOff, Zap, Sun, Moon } from 'lucide-react';
+import {
+  Sparkles,
+  Shield,
+  User,
+  Lock,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Zap,
+  Sun,
+  Moon,
+  Mail,
+  BadgeCheck,
+  UserPlus,
+  KeyRound,
+  CheckCircle2,
+  AlertCircle,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
+import api from '../api/client';
 import demoAvatars from '../utils/avatars';
 
 const LoginPage = () => {
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'signup' | 'verify'
+
+  // Login form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sign up form state
+  const [signupData, setSignupData] = useState({
+    employeeId: '',
+    name: '',
+    email: '',
+    password: '',
+    role: 'employee', // 'employee' | 'admin'
+    department: 'Engineering',
+    designation: 'Software Engineer',
+  });
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+
+  // Verification form state
+  const [verifyEmailInput, setVerifyEmailInput] = useState('');
+  const [verifyTokenInput, setVerifyTokenInput] = useState('');
+  const [demoVerificationInfo, setDemoVerificationInfo] = useState(null);
 
   const { login } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Check URL query parameters for token/email
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tokenParam = params.get('token');
+    const emailParam = params.get('email');
+    if (tokenParam || emailParam) {
+      setAuthMode('verify');
+      if (tokenParam) setVerifyTokenInput(tokenParam);
+      if (emailParam) setVerifyEmailInput(emailParam);
+    }
+  }, [location.search]);
 
   const handleLoginSubmit = async (e, customEmail, customPassword) => {
     if (e) e.preventDefault();
@@ -29,23 +79,101 @@ const LoginPage = () => {
     }
 
     setIsSubmitting(true);
-    const result = await login(loginEmail, loginPass);
-    setIsSubmitting(false);
+    try {
+      const res = await api.post('/auth/login', { email: loginEmail, password: loginPass });
+      setIsSubmitting(false);
 
-    if (result.success) {
-      toast.success(`Welcome to Dayflow, ${result.user.name}!`);
-      const targetRoute =
-        location.state?.from?.pathname ||
-        (result.user.role === 'admin' ? '/admin' : '/employee');
-      navigate(targetRoute, { replace: true });
-    } else {
-      toast.error(result.message || 'Login failed');
+      if (res.data.success) {
+        localStorage.setItem('dayflow_token', res.data.token);
+        localStorage.setItem('dayflow_user', JSON.stringify(res.data.user));
+        toast.success(`Welcome to Dayflow, ${res.data.user.name}!`);
+
+        const targetRoute =
+          location.state?.from?.pathname ||
+          (res.data.user.role === 'admin' ? '/admin' : '/employee');
+        
+        // Force window location or navigate to load fresh context
+        window.location.href = targetRoute;
+      }
+    } catch (err) {
+      setIsSubmitting(false);
+      const data = err.response?.data;
+      if (data?.unverified) {
+        toast.error('Email not verified. Redirecting to verification...');
+        setAuthMode('verify');
+        setVerifyEmailInput(data.email || loginEmail);
+        if (data.verificationToken) {
+          setVerifyTokenInput(data.verificationToken);
+        }
+      } else {
+        toast.error(data?.message || 'Login failed. Please check your credentials.');
+      }
+    }
+  };
+
+  const handleSignupSubmit = async (e) => {
+    e.preventDefault();
+    if (!signupData.employeeId || !signupData.email || !signupData.password) {
+      toast.error('Please fill in all required registration fields.');
+      return;
+    }
+
+    if (signupData.password.length < 6) {
+      toast.error('Password must be at least 6 characters.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await api.post('/auth/register', signupData);
+      setIsSubmitting(false);
+
+      if (res.data.success) {
+        toast.success('Registration successful! Please verify your email.');
+        setDemoVerificationInfo(res.data.demoVerification);
+        setVerifyEmailInput(signupData.email);
+        if (res.data.demoVerification?.token) {
+          setVerifyTokenInput(res.data.demoVerification.token);
+        }
+        setAuthMode('verify');
+      }
+    } catch (err) {
+      setIsSubmitting(false);
+      toast.error(err.response?.data?.message || 'Registration failed. Please try again.');
+    }
+  };
+
+  const handleVerifySubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!verifyTokenInput && !verifyEmailInput) {
+      toast.error('Please enter the verification token or email');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await api.post('/auth/verify-email', {
+        token: verifyTokenInput,
+        email: verifyEmailInput,
+      });
+      setIsSubmitting(false);
+
+      if (res.data.success) {
+        toast.success('Account verified successfully! You can now sign in.');
+        setEmail(verifyEmailInput);
+        setAuthMode('login');
+        setDemoVerificationInfo(null);
+      }
+    } catch (err) {
+      setIsSubmitting(false);
+      toast.error(err.response?.data?.message || 'Verification failed. Invalid or expired token.');
     }
   };
 
   const handleQuickDemo = (demoEmail, demoPassword) => {
     setEmail(demoEmail);
     setPassword(demoPassword);
+    setAuthMode('login');
     handleLoginSubmit(null, demoEmail, demoPassword);
   };
 
@@ -93,85 +221,348 @@ const LoginPage = () => {
 
       {/* Main Container */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Left Column: Login Form */}
-          <div className="lg:col-span-6 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 sm:p-10 shadow-xl dark:shadow-2xl backdrop-blur-xl transition-colors duration-200">
-            <div className="mb-7">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                Sign in to Dayflow
-              </h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1.5">
-                Workplace attendance, leave requests, and payroll intelligence.
-              </p>
+        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: Form (Login / Sign Up / Verify Email) */}
+          <div className="lg:col-span-6 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-9 shadow-xl dark:shadow-2xl backdrop-blur-xl transition-colors duration-200">
+            
+            {/* Mode Switcher Tabs */}
+            <div className="flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 mb-6 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setAuthMode('login')}
+                className={`flex-1 py-2 rounded-xl transition-all ${
+                  authMode === 'login'
+                    ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-300 shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => setAuthMode('signup')}
+                className={`flex-1 py-2 rounded-xl transition-all ${
+                  authMode === 'signup'
+                    ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-300 shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Sign Up
+              </button>
+              <button
+                type="button"
+                onClick={() => setAuthMode('verify')}
+                className={`flex-1 py-2 rounded-xl transition-all ${
+                  authMode === 'verify'
+                    ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-300 shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Verify Email
+              </button>
             </div>
 
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
-              {/* Email field */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                  Work Email
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <User className="w-4 h-4" />
-                  </div>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. admin@dayflow.com"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
-                  />
+            {/* TAB 1: SIGN IN */}
+            {authMode === 'login' && (
+              <>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    Sign in to Dayflow
+                  </h2>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">
+                    Workplace attendance, leave management, and payroll intelligence.
+                  </p>
                 </div>
-              </div>
 
-              {/* Password field */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                  Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Lock className="w-4 h-4" />
+                <form onSubmit={handleLoginSubmit} className="space-y-4">
+                  {/* Email field */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                      Work Email
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="e.g. admin@dayflow.com"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                      />
+                    </div>
                   </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    className="w-full pl-10 pr-11 py-2.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
-                  />
+
+                  {/* Password field */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <Lock className="w-4 h-4" />
+                      </div>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        className="w-full pl-10 pr-11 py-2.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submit button */}
                   <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-sm shadow-glow flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Signing in...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Sign In</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                      </>
+                    )}
                   </button>
-                </div>
-              </div>
+                </form>
+              </>
+            )}
 
-              {/* Submit button */}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-sm shadow-glow flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Signing in...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Sign In</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                  </>
+            {/* TAB 2: SIGN UP */}
+            {authMode === 'signup' && (
+              <>
+                <div className="mb-5">
+                  <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    Create Dayflow Account
+                  </h2>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">
+                    Register a new Employee or HR Administrator identity.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSignupSubmit} className="space-y-3.5 text-xs">
+                  {/* Role Selector */}
+                  <div>
+                    <label className="block font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                      Organization Role *
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSignupData({ ...signupData, role: 'employee' })}
+                        className={`p-2.5 rounded-xl border text-center font-bold transition-all flex items-center justify-center gap-1.5 ${
+                          signupData.role === 'employee'
+                            ? 'bg-brand-50 dark:bg-brand-950/60 border-brand-500 text-brand-700 dark:text-brand-300'
+                            : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        <User className="w-4 h-4" />
+                        Employee
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSignupData({ ...signupData, role: 'admin' })}
+                        className={`p-2.5 rounded-xl border text-center font-bold transition-all flex items-center justify-center gap-1.5 ${
+                          signupData.role === 'admin'
+                            ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-500 text-amber-700 dark:text-amber-300'
+                            : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        <Shield className="w-4 h-4" />
+                        HR / Admin
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Employee ID & Name */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                        Employee ID *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={signupData.employeeId}
+                        onChange={(e) =>
+                          setSignupData({ ...signupData, employeeId: e.target.value.toUpperCase() })
+                        }
+                        placeholder="e.g. EMP-007"
+                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        value={signupData.name}
+                        onChange={(e) => setSignupData({ ...signupData, name: e.target.value })}
+                        placeholder="e.g. Vikramaditya Rao"
+                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                      Work Email *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={signupData.email}
+                      onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
+                      placeholder="e.g. vikram@dayflow.com"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div>
+                    <label className="block font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+                      Password (min 6 characters) *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showSignupPassword ? 'text' : 'password'}
+                        required
+                        minLength={6}
+                        value={signupData.password}
+                        onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                        placeholder="Create a strong password"
+                        className="w-full pl-3.5 pr-10 py-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSignupPassword(!showSignupPassword)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                      >
+                        {showSignupPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>
+                      After sign-up, your account will be created in an <strong>Unverified</strong> state. You must verify your email before logging in.
+                    </span>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-2.5 px-4 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-xs shadow-glow flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4" />
+                        <span>Register & Generate Token</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              </>
+            )}
+
+            {/* TAB 3: VERIFY EMAIL */}
+            {authMode === 'verify' && (
+              <>
+                <div className="mb-5">
+                  <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    Verify Your Email
+                  </h2>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">
+                    Enter your email and verification token to activate your account.
+                  </p>
+                </div>
+
+                {demoVerificationInfo && (
+                  <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 mb-4 text-xs space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold">
+                      <CheckCircle2 className="w-4 h-4" /> Demo Verification Ready
+                    </div>
+                    <p className="text-[11px] text-emerald-800 dark:text-emerald-200">
+                      Token auto-populated below for instant hackathon verification.
+                    </p>
+                  </div>
                 )}
-              </button>
-            </form>
+
+                <form onSubmit={handleVerifySubmit} className="space-y-4 text-xs">
+                  <div>
+                    <label className="block font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                      Account Email
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-slate-400 absolute inset-y-0 left-3.5 my-auto" />
+                      <input
+                        type="email"
+                        required
+                        value={verifyEmailInput}
+                        onChange={(e) => setVerifyEmailInput(e.target.value)}
+                        placeholder="e.g. vikram@dayflow.com"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                      Verification Token
+                    </label>
+                    <div className="relative">
+                      <KeyRound className="w-4 h-4 text-slate-400 absolute inset-y-0 left-3.5 my-auto" />
+                      <input
+                        type="text"
+                        required
+                        value={verifyTokenInput}
+                        onChange={(e) => setVerifyTokenInput(e.target.value)}
+                        placeholder="Enter verification token"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs shadow-glow flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <>
+                        <BadgeCheck className="w-4 h-4" />
+                        <span>Verify & Activate Account</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              </>
+            )}
+
           </div>
 
           {/* Right Column: 1-Click Demo Accounts for Hackathon Judges */}
@@ -182,7 +573,7 @@ const LoginPage = () => {
                 Hackathon Demo Quick Switcher
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                Click any profile card below to sign in instantly with Indian demo accounts.
+                Click any profile card below to sign in instantly with verified Indian demo accounts.
               </p>
             </div>
 

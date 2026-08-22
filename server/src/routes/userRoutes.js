@@ -6,6 +6,10 @@ const {
   createEmployee,
   updateEmployee,
   deleteEmployee,
+  getUserDocuments,
+  addUserDocument,
+  deleteUserDocument,
+  verifyUserDocument,
 } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -21,6 +25,14 @@ router.put('/profile', (req, res) => {
   req.params.id = req.user._id.toString();
   return updateEmployee(req, res);
 });
+
+// Employee document routes
+router.route('/:id/documents')
+  .get(getUserDocuments)
+  .post(addUserDocument);
+
+router.delete('/:id/documents/:docId', deleteUserDocument);
+router.put('/:id/documents/:docId/status', authorize('admin'), verifyUserDocument);
 
 router.route('/:id')
   .get(getEmployeeById)
