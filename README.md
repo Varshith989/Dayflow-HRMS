@@ -16,6 +16,28 @@ WorkZen is a full-stack Human Resource Management System (HRMS) designed to digi
 
 ---
 
+## 📸 Application Screenshots
+
+### 🔐 WorkZen Authentication
+![WorkZen Login](docs/screenshots/login.png)
+
+### 👤 Employee Dashboard
+![Employee Dashboard](docs/screenshots/employee-dashboard.png)
+
+### 🕐 Attendance Management
+![Attendance Management](docs/screenshots/attendance.png)
+
+### 🌴 Leave & Time-Off Management
+![Leave Management](docs/screenshots/leave.png)
+
+### 💰 Payroll & Payslip
+![Payroll](docs/screenshots/payroll.png)
+
+### 🧑‍💼 HR / Admin Dashboard
+![Admin Dashboard](docs/screenshots/admin-dashboard.png)
+
+---
+
 ## 💡 Why WorkZen?
 
 Traditional HR workflows often rely on scattered spreadsheets, manual leave tracking, delayed payroll calculations, and disconnected employee records.
