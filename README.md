@@ -340,6 +340,7 @@ WorkZen includes:
 
 - MongoDB
 - Mongoose
+- mongodb-memory-server (automatic fallback for zero-configuration, instant execution)
 
 ## Development
 
@@ -392,3 +393,124 @@ dayflow-hrms/
 ├── package.json
 ├── .gitignore
 └── README.md
+```
+
+---
+
+# 🔑 Demo Accounts
+
+The database is pre-seeded with realistic Indian enterprise personas for evaluation:
+
+> **Note:** These accounts are seeded demo credentials specifically created for hackathon evaluation and demonstration.
+
+### HR Administrator
+- **Name:** Priya Iyer (HR Operations Lead)
+- **Email:** `admin@dayflow.com`
+- **Password:** `admin123`
+- **Role:** `admin`
+
+### Employees
+1. **Ananya Sharma** (Senior Fullstack Developer)
+   - **Email:** `alex@dayflow.com`
+   - **Password:** `employee123`
+2. **Rohan Nair** (Lead UI/UX Designer)
+   - **Email:** `elena@dayflow.com`
+   - **Password:** `employee123`
+3. **Arjun Menon** (Director of Marketing)
+   - **Email:** `marcus@dayflow.com`
+   - **Password:** `employee123`
+4. **Sneha Kulkarni** (Financial Controller)
+   - **Email:** `sneha@dayflow.com`
+   - **Password:** `employee123`
+5. **Karthik Reddy** (Senior DevOps Specialist)
+   - **Email:** `karthik@dayflow.com`
+   - **Password:** `employee123`
+
+---
+
+# 🚀 How to Run the Project Locally
+
+### Prerequisites
+- **Node.js** (v18.0.0 or higher recommended)
+- **npm** (v9.0.0 or higher)
+- *(Optional)* Local **MongoDB** instance (If MongoDB is not running locally, the server will automatically launch an embedded in-memory MongoDB database).
+
+---
+
+### Step 1: Clone the Repository
+```bash
+git clone https://github.com/vaishnavikp156/dayflow-hrms.git
+cd dayflow-hrms
+```
+
+---
+
+### Step 2: Set Up Backend Server
+1. Navigate to the `server` directory and install dependencies:
+   ```bash
+   cd server
+   npm install
+   ```
+
+2. Create a `.env` file inside `server/` (or use defaults):
+   ```env
+   PORT=5000
+   NODE_ENV=development
+   MONGODB_URI=mongodb://127.0.0.1:27017/dayflow_hrms
+   JWT_SECRET=your_secure_jwt_secret_here
+   ```
+
+3. Seed initial demo data:
+   ```bash
+   npm run seed
+   ```
+
+4. Start the backend development server:
+   ```bash
+   npm run dev
+   ```
+   *Backend will run on `http://localhost:5000` (Health check: `http://localhost:5000/api/health`).*
+
+---
+
+### Step 3: Set Up Frontend Client
+1. Open a new terminal, navigate to the `client` directory, and install dependencies:
+   ```bash
+   cd client
+   npm install
+   ```
+
+2. Start the frontend development server:
+   ```bash
+   npm run dev
+   ```
+   *Frontend will run on `http://localhost:5173`.*
+
+---
+
+### Step 4: Run Tests & Build Verification
+- **Run Backend Verification Suites:**
+   ```bash
+   cd server
+   node src/test_final_compliance.js
+   ```
+- **Run Frontend Production Build:**
+   ```bash
+   cd client
+   npm run build
+   ```
+
+---
+
+# 🔒 Security & Data Integrity Notes
+
+- **Password Hashing:** All user passwords are encrypted using `bcryptjs` with salt rounds before database persistence.
+- **Route Authorization:** Middleware validates authorization headers, rejecting unauthenticated requests with `401 Unauthorized` and cross-role requests with `403 Forbidden`.
+- **Isolated Evaluation:** Email verification and document storage are implemented without external cloud dependencies to ensure the application runs reliably offline and across evaluation environments.
+
+---
+
+# 📄 License & Attribution
+
+Developed for the **Odoo × NMIT Hackathon 2026**.  
+Made with ❤️ in India.
