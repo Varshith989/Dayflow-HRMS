@@ -7,24 +7,39 @@ import {
   Edit2,
   Eye,
   Search,
-  Filter,
+  Download,
   TrendingUp,
-  TrendingDown,
-  Sparkles,
-  X,
-  Check,
+  CheckCircle2,
+  Clock,
+  Printer,
+  FileText,
   Save,
+  Check,
+  Building,
 } from 'lucide-react';
 import api from '../../api/client';
 import { useToast } from '../../context/ToastContext';
 import demoAvatars from '../../utils/avatars';
+import { format } from 'date-fns';
 
-const PayrollManagementPage = () => {
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { StatCard } from '../../components/ui/StatCard';
+import { FilterBar } from '../../components/ui/FilterBar';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table';
+import { Modal } from '../../components/ui/Modal';
+import { Input } from '../../components/ui/Input';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { SkeletonTable } from '../../components/ui/Skeleton';
+import { DayflowLogo } from '../../components/common/DayflowLogo';
+
+export const PayrollManagementPage = () => {
   const [selectedMonth, setSelectedMonth] = useState(8); // August
   const [selectedYear, setSelectedYear] = useState(2026);
   const [department, setDepartment] = useState('All');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('All');
   const [search, setSearch] = useState('');
+  const [density, setDensity] = useState('comfortable');
 
   const [records, setRecords] = useState([]);
   const [stats, setStats] = useState({ totalGross: 0, totalNet: 0, totalDisbursed: 0, totalDeductions: 0 });
@@ -95,33 +110,38 @@ const PayrollManagementPage = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchPayrollData();
-    }, 300);
+    }, 250);
     return () => clearTimeout(timer);
   }, [search]);
 
   const handleGeneratePayslip = async (e) => {
     e.preventDefault();
-    if (!newSalary.userId || !newSalary.basicSalary) {
-      toast.error('Please select an employee and specify basic salary');
+    if (!newSalary.userId) {
+      toast.error('Please select an employee');
       return;
     }
 
     setActionLoading(true);
     try {
-      const res = await api.post('/salaries', newSalary);
+      const res = await api.post('/salaries', {
+        ...newSalary,
+        month: selectedMonth,
+        year: selectedYear,
+      });
+
       if (res.data.success) {
-        toast.success(res.data.message);
+        toast.success(res.data.message || 'Payslip generated successfully');
         setShowGenerateModal(false);
         fetchPayrollData();
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to generate payslip');
+      toast.error(error.response?.data?.message || 'Error generating payslip');
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handleUpdateSalary = async (e) => {
+  const handleUpdateRecord = async (e) => {
     e.preventDefault();
     if (!selectedRecord) return;
 
@@ -129,750 +149,736 @@ const PayrollManagementPage = () => {
     try {
       const res = await api.put(`/salaries/${selectedRecord._id}`, selectedRecord);
       if (res.data.success) {
-        toast.success(res.data.message);
+        toast.success('Salary record updated');
         setShowEditModal(false);
         fetchPayrollData();
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update salary');
+      toast.error(error.response?.data?.message || 'Error updating salary record');
     } finally {
       setActionLoading(false);
     }
   };
 
-  const months = [
-    { num: 1, name: 'January' },
-    { num: 2, name: 'February' },
-    { num: 3, name: 'March' },
-    { num: 4, name: 'April' },
-    { num: 5, name: 'May' },
-    { num: 6, name: 'June' },
-    { num: 7, name: 'July' },
-    { num: 8, name: 'August' },
-    { num: 9, name: 'September' },
-    { num: 10, name: 'October' },
-    { num: 11, name: 'November' },
-    { num: 12, name: 'December' },
-  ];
+  const getMonthName = (m) => {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    return months[m - 1] || `Month ${m}`;
+  };
+
+  const exportCSV = () => {
+    const headers = ['Month/Year', 'Employee ID', 'Name', 'Department', 'Basic', 'HRA', 'Allowances', 'Gross Salary', 'Deductions', 'Net Salary', 'Status'];
+    const rows = records.map((r) => [
+      `"${getMonthName(r.month)} ${r.year}"`,
+      r.userId?.employeeId || '',
+      `"${r.userId?.name || ''}"`,
+      `"${r.userId?.department || ''}"`,
+      r.basicSalary,
+      r.hra,
+      r.allowances,
+      r.grossSalary,
+      (r.deductions?.tax || 0) + (r.deductions?.pf || 0) + (r.deductions?.unpaidLeaveDeduction || 0) + (r.deductions?.other || 0),
+      r.netSalary,
+      r.paymentStatus,
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `dayflow-payroll-${getMonthName(selectedMonth)}-${selectedYear}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Payroll summary exported to CSV');
+  };
+
+  const activeFilters = [];
+  if (department !== 'All') {
+    activeFilters.push({
+      key: 'dept',
+      label: 'Dept',
+      displayValue: department,
+      onRemove: () => setDepartment('All'),
+    });
+  }
+  if (paymentStatusFilter !== 'All') {
+    activeFilters.push({
+      key: 'status',
+      label: 'Status',
+      displayValue: paymentStatusFilter,
+      onRemove: () => setPaymentStatusFilter('All'),
+    });
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Title & Generate Button */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800/80">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Payroll & Compensation
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Manage organization payroll, generate monthly payslips, and adjust statutory components.
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Payroll & Compensation Management
+            </h1>
+            <Badge variant="brand" size="sm">
+              {getMonthName(selectedMonth)} {selectedYear}
+            </Badge>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Disbursement cycles, statutory tax & PF deductions, allowances, and compliant payslip generation.
           </p>
         </div>
 
-        <button
-          onClick={() => setShowGenerateModal(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-glow flex items-center gap-2 transition-all shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Generate Monthly Payslip</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Month & Year Selectors */}
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+            className="px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+          >
+            {Array.from({ length: 12 }).map((_, i) => (
+              <option key={i + 1} value={i + 1}>
+                {getMonthName(i + 1)}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            className="px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+          >
+            <option value={2026}>2026</option>
+            <option value={2025}>2025</option>
+          </select>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={Download}
+            onClick={exportCSV}
+          >
+            Export
+          </Button>
+
+          <Button
+            variant="primary"
+            size="sm"
+            icon={Plus}
+            onClick={() => setShowGenerateModal(true)}
+          >
+            Generate Payslip
+          </Button>
+        </div>
       </div>
 
-      {/* Metric Cards */}
+      {/* Financial KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-card flex items-center justify-between transition-colors">
-          <div>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">Total Disbursed</span>
-            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
-              ₹{stats.totalDisbursed?.toLocaleString('en-IN')}
-            </div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 block">Disbursed net salary</span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-            <DollarSign className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-card flex items-center justify-between transition-colors">
-          <div>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">Gross Payroll</span>
-            <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">
-              ₹{stats.totalGross?.toLocaleString('en-IN')}
-            </div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 block">Pre-deductions volume</span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center">
-            <TrendingUp className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-card flex items-center justify-between transition-colors">
-          <div>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">Total Deductions</span>
-            <div className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1">
-              ₹{stats.totalDeductions?.toLocaleString('en-IN')}
-            </div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 block">PF, TDS & Adjustments</span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-            <TrendingDown className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-card flex items-center justify-between transition-colors">
-          <div>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">Processed Slips</span>
-            <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1">{records.length}</div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 block">Staff in cycle</span>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-            <CreditCard className="w-5 h-5" />
-          </div>
-        </div>
+        <StatCard
+          title="Total Disbursed (Net)"
+          value={`₹${(stats.totalDisbursed || 0).toLocaleString('en-IN')}`}
+          subtitle="Net funds transferred"
+          icon={CreditCard}
+          iconClassName="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-800/60"
+        />
+        <StatCard
+          title="Gross Payroll Volume"
+          value={`₹${(stats.totalGross || 0).toLocaleString('en-IN')}`}
+          subtitle="Pre-tax compensation"
+          icon={DollarSign}
+          iconClassName="bg-indigo-50 dark:bg-indigo-950/60 text-brand-600 dark:text-brand-400 border-brand-200/60 dark:border-brand-800/60"
+        />
+        <StatCard
+          title="Taxes & PF Withheld"
+          value={`₹${(stats.totalDeductions || 0).toLocaleString('en-IN')}`}
+          subtitle="Statutory contributions"
+          icon={TrendingUp}
+        />
+        <StatCard
+          title="Employees Processed"
+          value={`${records.length} / ${employeesList.length || records.length}`}
+          subtitle="Processed this period"
+          icon={CheckCircle2}
+        />
       </div>
 
-      {/* Filter Bar (Month/Year, Dept, Search) */}
-      <div className="p-4 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-card flex flex-col md:flex-row items-center justify-between gap-4">
-        {/* Month and Year Selectors */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <div className="flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
-            <span className="text-xs text-slate-500 dark:text-slate-400">Cycle:</span>
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
+      {/* Filter Bar */}
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search payslips by employee name or ID..."
+        filters={[
+          {
+            key: 'dept',
+            label: 'Department',
+            value: department,
+            onChange: setDepartment,
+            options: [
+              { label: 'All Departments', value: 'All' },
+              { label: 'Engineering', value: 'Engineering' },
+              { label: 'Product Design', value: 'Product Design' },
+              { label: 'Sales & Marketing', value: 'Sales & Marketing' },
+              { label: 'Human Resources', value: 'Human Resources' },
+              { label: 'Finance', value: 'Finance' },
+            ],
+          },
+          {
+            key: 'status',
+            label: 'Payment Status',
+            value: paymentStatusFilter,
+            onChange: setPaymentStatusFilter,
+            options: [
+              { label: 'All Statuses', value: 'All' },
+              { label: 'Paid', value: 'Paid' },
+              { label: 'Pending', value: 'Pending' },
+            ],
+          },
+        ]}
+        activeFilters={activeFilters}
+        onClearAll={() => {
+          setDepartment('All');
+          setPaymentStatusFilter('All');
+          setSearch('');
+        }}
+        density={density}
+        onDensityChange={setDensity}
+      />
+
+      {/* Payroll Table */}
+      {loading ? (
+        <SkeletonTable rows={6} cols={7} />
+      ) : records.length === 0 ? (
+        <EmptyState
+          icon={DollarSign}
+          title="No payroll records found"
+          description={`No payslips generated for ${getMonthName(selectedMonth)} ${selectedYear} matching your criteria.`}
+          action={
+            <Button
+              variant="primary"
+              size="xs"
+              icon={Plus}
+              onClick={() => setShowGenerateModal(true)}
             >
-              {months.map((m) => (
-                <option key={m.num} value={m.num}>
-                  {m.name}
+              Generate First Payslip
+            </Button>
+          }
+        />
+      ) : (
+        <Table>
+          <TableHeader>
+            <tr>
+              <TableHead>Employee</TableHead>
+              <TableHead>Basic Salary</TableHead>
+              <TableHead>HRA & Allowances</TableHead>
+              <TableHead>Gross</TableHead>
+              <TableHead>Deductions</TableHead>
+              <TableHead>Net Salary</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </tr>
+          </TableHeader>
+          <TableBody>
+            {records.map((r) => {
+              const totalDeductions =
+                (r.deductions?.tax || 0) +
+                (r.deductions?.pf || 0) +
+                (r.deductions?.unpaidLeaveDeduction || 0) +
+                (r.deductions?.other || 0);
+
+              return (
+                <TableRow key={r._id}>
+                  {/* Employee info */}
+                  <TableCell density={density}>
+                    <div className="flex items-center gap-2.5">
+                      <img
+                        src={r.userId?.avatar || demoAvatars.generic(r.userId?.name)}
+                        alt={r.userId?.name}
+                        className="w-8 h-8 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <div className="font-semibold text-slate-900 dark:text-white truncate">
+                          {r.userId?.name}
+                        </div>
+                        <div className="text-[11px] text-slate-400 truncate">
+                          {r.userId?.employeeId} • {r.userId?.department}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+
+                  {/* Basic */}
+                  <TableCell density={density}>
+                    <span className="font-mono text-xs tabular-nums text-slate-800 dark:text-slate-200">
+                      ₹{r.basicSalary.toLocaleString('en-IN')}
+                    </span>
+                  </TableCell>
+
+                  {/* HRA & Allowances */}
+                  <TableCell density={density}>
+                    <span className="font-mono text-xs tabular-nums text-slate-600 dark:text-slate-300">
+                      ₹{(r.hra + r.allowances).toLocaleString('en-IN')}
+                    </span>
+                  </TableCell>
+
+                  {/* Gross */}
+                  <TableCell density={density}>
+                    <span className="font-mono text-xs font-semibold tabular-nums text-slate-800 dark:text-slate-200">
+                      ₹{r.grossSalary.toLocaleString('en-IN')}
+                    </span>
+                  </TableCell>
+
+                  {/* Deductions */}
+                  <TableCell density={density}>
+                    <span className="font-mono text-xs text-rose-600 dark:text-rose-400 tabular-nums">
+                      -₹{totalDeductions.toLocaleString('en-IN')}
+                    </span>
+                  </TableCell>
+
+                  {/* Net Salary */}
+                  <TableCell density={density}>
+                    <span className="font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400 tabular-nums">
+                      ₹{r.netSalary.toLocaleString('en-IN')}
+                    </span>
+                  </TableCell>
+
+                  {/* Payment Status */}
+                  <TableCell density={density}>
+                    <Badge variant={r.paymentStatus === 'Paid' ? 'success' : 'warning'} dot size="xs">
+                      {r.paymentStatus}
+                    </Badge>
+                  </TableCell>
+
+                  {/* Actions */}
+                  <TableCell density={density} className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        icon={Eye}
+                        onClick={() => {
+                          setSelectedRecord(r);
+                          setShowViewModal(true);
+                        }}
+                        title="View Official Payslip"
+                      >
+                        Payslip
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedRecord(JSON.parse(JSON.stringify(r)));
+                          setShowEditModal(true);
+                        }}
+                        title="Edit Salary Breakdown"
+                        className="p-1 rounded-md text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
+
+      {/* GENERATE PAYSLIP MODAL */}
+      <Modal
+        isOpen={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        title="Generate Monthly Payslip"
+        subtitle={`Create salary disbursement breakdown for ${getMonthName(selectedMonth)} ${selectedYear}`}
+        icon={DollarSign}
+        size="lg"
+      >
+        <form onSubmit={handleGeneratePayslip} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Select Employee <span className="text-rose-500">*</span>
+            </label>
+            <select
+              value={newSalary.userId}
+              onChange={(e) => setNewSalary({ ...newSalary, userId: e.target.value })}
+              className="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+            >
+              {employeesList.map((emp) => (
+                <option key={emp._id} value={emp._id}>
+                  {emp.name} ({emp.employeeId} - {emp.department})
                 </option>
               ))}
             </select>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-            >
-              <option value={2026}>2026</option>
-              <option value={2025}>2025</option>
-            </select>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
-            <select
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-            >
-              <option value="All">All Departments</option>
-              <option value="Engineering">Engineering</option>
-              <option value="Product Design">Product Design</option>
-              <option value="Sales & Marketing">Sales & Marketing</option>
-              <option value="Human Resources">Human Resources</option>
-              <option value="Finance">Finance</option>
-            </select>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            <Input
+              label="Basic Salary (₹)"
+              type="number"
+              required
+              value={newSalary.basicSalary}
+              onChange={(e) =>
+                setNewSalary({ ...newSalary, basicSalary: parseFloat(e.target.value) || 0 })
+              }
+            />
+            <Input
+              label="HRA (₹)"
+              type="number"
+              value={newSalary.hra}
+              onChange={(e) =>
+                setNewSalary({ ...newSalary, hra: parseFloat(e.target.value) || 0 })
+              }
+            />
+            <Input
+              label="Special Allowances (₹)"
+              type="number"
+              value={newSalary.allowances}
+              onChange={(e) =>
+                setNewSalary({ ...newSalary, allowances: parseFloat(e.target.value) || 0 })
+              }
+            />
           </div>
-        </div>
 
-        {/* Search */}
-        <div className="relative w-full sm:w-64">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute inset-y-0 left-3.5 my-auto" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search employee name or ID..."
-            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-brand-500"
-          />
-        </div>
-      </div>
-
-      {/* Payroll Table */}
-      <div className="rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm dark:shadow-card transition-colors">
-        {loading ? (
-          <div className="p-12 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-xs">Loading company payroll records...</span>
-          </div>
-        ) : records.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-xs">
-            No salary records generated for this cycle. Click "Generate Monthly Payslip" to create.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100 dark:bg-slate-950/80 text-slate-600 dark:text-slate-400 uppercase font-semibold border-b border-slate-200 dark:border-slate-800">
-                <tr>
-                  <th className="px-6 py-4">Employee</th>
-                  <th className="px-6 py-4">Department</th>
-                  <th className="px-6 py-4">Basic Pay</th>
-                  <th className="px-6 py-4">Allowances</th>
-                  <th className="px-6 py-4">Deductions</th>
-                  <th className="px-6 py-4">Net Salary</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 font-medium">
-                {records.map((r) => (
-                  <tr key={r._id} className="hover:bg-slate-50 dark:hover:bg-slate-850/50 transition-colors">
-                    {/* Employee info */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={r.userId?.avatar || demoAvatars.generic(r.userId?.name?.slice(0, 2))}
-                          alt={r.userId?.name}
-                          className="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
-                        />
-                        <div>
-                          <div className="text-sm font-bold text-slate-900 dark:text-white">
-                            {r.userId?.name || 'Staff Member'}
-                          </div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                            {r.userId?.employeeId}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="text-slate-900 dark:text-slate-200 font-semibold">{r.userId?.department}</div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400">{r.userId?.designation}</div>
-                    </td>
-
-                    <td className="px-6 py-4 font-mono font-semibold text-slate-700 dark:text-slate-300">
-                      ₹{r.basicSalary?.toLocaleString('en-IN')}
-                    </td>
-
-                    <td className="px-6 py-4 font-mono text-emerald-600 dark:text-emerald-400">
-                      +₹{((r.hra || 0) + (r.allowances || 0))?.toLocaleString('en-IN')}
-                    </td>
-
-                    <td className="px-6 py-4 font-mono text-rose-600 dark:text-rose-400">
-                      -₹{(r.grossSalary - r.netSalary)?.toLocaleString('en-IN')}
-                    </td>
-
-                    <td className="px-6 py-4 font-mono font-bold text-slate-900 dark:text-white text-sm">
-                      ₹{r.netSalary?.toLocaleString('en-IN')}
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                          r.paymentStatus === 'Paid'
-                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25'
-                            : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25'
-                        }`}
-                      >
-                        {r.paymentStatus}
-                      </span>
-                    </td>
-
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => {
-                            setSelectedRecord(r);
-                            setShowViewModal(true);
-                          }}
-                          title="View Official Payslip"
-                          className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedRecord(JSON.parse(JSON.stringify(r)));
-                            setShowEditModal(true);
-                          }}
-                          title="Edit Salary Structure"
-                          className="p-1.5 rounded-lg bg-emerald-600/15 hover:bg-emerald-600 text-emerald-700 dark:text-emerald-300 hover:text-white transition-all"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* MODAL 1: GENERATE MONTHLY PAYSLIP */}
-      {showGenerateModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-6 my-8 transition-colors">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                  <DollarSign className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Generate Monthly Payslip</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Create employee salary breakdown</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowGenerateModal(false)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            <Input
+              label="Tax / TDS Deduction (₹)"
+              type="number"
+              value={newSalary.deductions.tax}
+              onChange={(e) =>
+                setNewSalary({
+                  ...newSalary,
+                  deductions: { ...newSalary.deductions, tax: parseFloat(e.target.value) || 0 },
+                })
+              }
+            />
+            <Input
+              label="Provident Fund (PF) (₹)"
+              type="number"
+              value={newSalary.deductions.pf}
+              onChange={(e) =>
+                setNewSalary({
+                  ...newSalary,
+                  deductions: { ...newSalary.deductions, pf: parseFloat(e.target.value) || 0 },
+                })
+              }
+            />
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Payment Status
+              </label>
+              <select
+                value={newSalary.paymentStatus}
+                onChange={(e) => setNewSalary({ ...newSalary, paymentStatus: e.target.value })}
+                className="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20"
               >
-                <X className="w-5 h-5" />
-              </button>
+                <option value="Paid">Paid</option>
+                <option value="Pending">Pending</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Real-time Net Calculation Pill */}
+          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-xs">
+            <div>
+              <span className="text-slate-500">Calculated Net Payable:</span>
+              <div className="font-mono font-bold text-base text-emerald-600 dark:text-emerald-400">
+                ₹{Math.max(
+                  0,
+                  newSalary.basicSalary +
+                    newSalary.hra +
+                    newSalary.allowances -
+                    (newSalary.deductions.tax + newSalary.deductions.pf)
+                ).toLocaleString('en-IN')}
+              </div>
+            </div>
+            <Badge variant="brand" size="xs">
+              Auto Gross/Net
+            </Badge>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowGenerateModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              type="submit"
+              loading={actionLoading}
+              icon={Plus}
+            >
+              Generate Payslip
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* EDIT SALARY RECORD MODAL */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit Salary Record"
+        subtitle={`Modify compensation breakdown for ${selectedRecord?.userId?.name}`}
+        icon={Edit2}
+        size="lg"
+      >
+        {selectedRecord && (
+          <form onSubmit={handleUpdateRecord} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <Input
+                label="Basic Salary (₹)"
+                type="number"
+                value={selectedRecord.basicSalary}
+                onChange={(e) =>
+                  setSelectedRecord({
+                    ...selectedRecord,
+                    basicSalary: parseFloat(e.target.value) || 0,
+                  })
+                }
+              />
+              <Input
+                label="HRA (₹)"
+                type="number"
+                value={selectedRecord.hra}
+                onChange={(e) =>
+                  setSelectedRecord({
+                    ...selectedRecord,
+                    hra: parseFloat(e.target.value) || 0,
+                  })
+                }
+              />
+              <Input
+                label="Allowances (₹)"
+                type="number"
+                value={selectedRecord.allowances}
+                onChange={(e) =>
+                  setSelectedRecord({
+                    ...selectedRecord,
+                    allowances: parseFloat(e.target.value) || 0,
+                  })
+                }
+              />
             </div>
 
-            <form onSubmit={handleGeneratePayslip} className="space-y-4 text-xs">
-              {/* Employee Selection */}
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Select Employee *</label>
-                <select
-                  required
-                  value={newSalary.userId}
-                  onChange={(e) => setNewSalary({ ...newSalary, userId: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-                >
-                  {employeesList.map((emp) => (
-                    <option key={emp._id} value={emp._id}>
-                      {emp.name} ({emp.employeeId}) — {emp.department}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Month and Year */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Pay Month</label>
-                  <select
-                    value={newSalary.month}
-                    onChange={(e) => setNewSalary({ ...newSalary, month: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-                  >
-                    {months.map((m) => (
-                      <option key={m.num} value={m.num}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Pay Year</label>
-                  <input
-                    type="number"
-                    value={newSalary.year}
-                    onChange={(e) => setNewSalary({ ...newSalary, year: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-                  />
-                </div>
-              </div>
-
-              {/* Earnings Components */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 space-y-3">
-                <span className="font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">
-                  Earnings Components
-                </span>
-                <div className="grid grid-cols-3 gap-2.5">
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 mb-1">Basic Salary (₹)</label>
-                    <input
-                      type="number"
-                      required
-                      value={newSalary.basicSalary}
-                      onChange={(e) =>
-                        setNewSalary({ ...newSalary, basicSalary: Number(e.target.value) })
-                      }
-                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 mb-1">HRA (₹)</label>
-                    <input
-                      type="number"
-                      value={newSalary.hra}
-                      onChange={(e) =>
-                        setNewSalary({ ...newSalary, hra: Number(e.target.value) })
-                      }
-                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 mb-1">Allowances (₹)</label>
-                    <input
-                      type="number"
-                      value={newSalary.allowances}
-                      onChange={(e) =>
-                        setNewSalary({ ...newSalary, allowances: Number(e.target.value) })
-                      }
-                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Deductions Components */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 space-y-3">
-                <span className="font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider block">
-                  Statutory Deductions
-                </span>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 mb-1">PF (₹)</label>
-                    <input
-                      type="number"
-                      value={newSalary.deductions.pf}
-                      onChange={(e) =>
-                        setNewSalary({
-                          ...newSalary,
-                          deductions: { ...newSalary.deductions, pf: Number(e.target.value) },
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 mb-1">Tax / TDS (₹)</label>
-                    <input
-                      type="number"
-                      value={newSalary.deductions.tax}
-                      onChange={(e) =>
-                        setNewSalary({
-                          ...newSalary,
-                          deductions: { ...newSalary.deductions, tax: Number(e.target.value) },
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Calculated preview */}
-              <div className="p-3.5 rounded-2xl bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800/40 flex justify-between items-center text-xs">
-                <span className="text-brand-700 dark:text-brand-300 font-semibold">Estimated Net Take-Home:</span>
-                <span className="text-lg font-black text-slate-900 dark:text-white font-mono">
-                  ₹
-                  {(
-                    Number(newSalary.basicSalary || 0) +
-                    Number(newSalary.hra || 0) +
-                    Number(newSalary.allowances || 0) -
-                    (Number(newSalary.deductions?.pf || 0) + Number(newSalary.deductions?.tax || 0))
-                  )?.toLocaleString('en-IN')}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setShowGenerateModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center gap-2 shadow-glow disabled:opacity-50"
-                >
-                  {actionLoading ? (
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <Check className="w-4 h-4" />
-                  )}
-                  Save & Disburse Payslip
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 2: EDIT SALARY STRUCTURE */}
-      {showEditModal && selectedRecord && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-6 my-8 transition-colors">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                  <Edit2 className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                    Edit Salary • {selectedRecord.userId?.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Cycle: {selectedRecord.month}/{selectedRecord.year}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdateSalary} className="space-y-4 text-xs">
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 space-y-3">
-                <span className="font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">
-                  Earnings
-                </span>
-                <div className="grid grid-cols-3 gap-2.5">
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 mb-1">Basic Salary (₹)</label>
-                    <input
-                      type="number"
-                      value={selectedRecord.basicSalary}
-                      onChange={(e) =>
-                        setSelectedRecord({
-                          ...selectedRecord,
-                          basicSalary: Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 mb-1">HRA (₹)</label>
-                    <input
-                      type="number"
-                      value={selectedRecord.hra}
-                      onChange={(e) =>
-                        setSelectedRecord({ ...selectedRecord, hra: Number(e.target.value) })
-                      }
-                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 mb-1">Allowances (₹)</label>
-                    <input
-                      type="number"
-                      value={selectedRecord.allowances}
-                      onChange={(e) =>
-                        setSelectedRecord({
-                          ...selectedRecord,
-                          allowances: Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 space-y-3">
-                <span className="font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider block">
-                  Deductions
-                </span>
-                <div className="grid grid-cols-3 gap-2.5">
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 mb-1">PF (₹)</label>
-                    <input
-                      type="number"
-                      value={selectedRecord.deductions?.pf || 0}
-                      onChange={(e) =>
-                        setSelectedRecord({
-                          ...selectedRecord,
-                          deductions: {
-                            ...selectedRecord.deductions,
-                            pf: Number(e.target.value),
-                          },
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 mb-1">Tax / TDS (₹)</label>
-                    <input
-                      type="number"
-                      value={selectedRecord.deductions?.tax || 0}
-                      onChange={(e) =>
-                        setSelectedRecord({
-                          ...selectedRecord,
-                          deductions: {
-                            ...selectedRecord.deductions,
-                            tax: Number(e.target.value),
-                          },
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-600 dark:text-slate-400 mb-1">Unpaid Leave Ded (₹)</label>
-                    <input
-                      type="number"
-                      value={selectedRecord.deductions?.unpaidLeaveDeduction || 0}
-                      onChange={(e) =>
-                        setSelectedRecord({
-                          ...selectedRecord,
-                          deductions: {
-                            ...selectedRecord.deductions,
-                            unpaidLeaveDeduction: Number(e.target.value),
-                          },
-                        })
-                      }
-                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Payment Status</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <Input
+                label="Tax (TDS) (₹)"
+                type="number"
+                value={selectedRecord.deductions?.tax || 0}
+                onChange={(e) =>
+                  setSelectedRecord({
+                    ...selectedRecord,
+                    deductions: {
+                      ...(selectedRecord.deductions || {}),
+                      tax: parseFloat(e.target.value) || 0,
+                    },
+                  })
+                }
+              />
+              <Input
+                label="Provident Fund (PF) (₹)"
+                type="number"
+                value={selectedRecord.deductions?.pf || 0}
+                onChange={(e) =>
+                  setSelectedRecord({
+                    ...selectedRecord,
+                    deductions: {
+                      ...(selectedRecord.deductions || {}),
+                      pf: parseFloat(e.target.value) || 0,
+                    },
+                  })
+                }
+              />
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Payment Status
+                </label>
                 <select
                   value={selectedRecord.paymentStatus}
                   onChange={(e) =>
-                    setSelectedRecord({
-                      ...selectedRecord,
-                      paymentStatus: e.target.value,
-                    })
+                    setSelectedRecord({ ...selectedRecord, paymentStatus: e.target.value })
                   }
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  className="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 >
                   <option value="Paid">Paid</option>
                   <option value="Pending">Pending</option>
                 </select>
               </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center gap-2 shadow-glow disabled:opacity-50"
-                >
-                  {actionLoading ? (
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <Save className="w-4 h-4" />
-                  )}
-                  Save Adjustments
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 3: VIEW FORMAL PAYSLIP */}
-      {showViewModal && selectedRecord && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6 my-8 transition-colors">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-glow">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Employee Payslip Document</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {selectedRecord.userId?.name} • Cycle {selectedRecord.month}/{selectedRecord.year}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowViewModal(false)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <X className="w-5 h-5" />
-              </button>
             </div>
 
-            <div className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800">
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400 uppercase">Employee</span>
-                  <div className="text-slate-900 dark:text-white font-bold">{selectedRecord.userId?.name}</div>
-                </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400 uppercase">Employee ID</span>
-                  <div className="text-slate-800 dark:text-slate-200 font-mono">{selectedRecord.userId?.employeeId}</div>
-                </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400 uppercase">Department</span>
-                  <div className="text-slate-800 dark:text-slate-200">{selectedRecord.userId?.department}</div>
-                </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400 uppercase">Status</span>
-                  <div className="text-emerald-600 dark:text-emerald-400 font-bold">{selectedRecord.paymentStatus}</div>
-                </div>
+            <Input
+              label="Remarks"
+              value={selectedRecord.remarks || ''}
+              onChange={(e) =>
+                setSelectedRecord({ ...selectedRecord, remarks: e.target.value })
+              }
+            />
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowEditModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                type="submit"
+                loading={actionLoading}
+                icon={Save}
+              >
+                Update Record
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {/* OFFICIAL PAYSLIP VIEW MODAL */}
+      <Modal
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        title="Official Salary Statement"
+        subtitle={`Period: ${getMonthName(selectedRecord?.month)} ${selectedRecord?.year}`}
+        icon={FileText}
+        size="lg"
+      >
+        {selectedRecord && (
+          <div className="space-y-4 text-xs">
+            {/* Payslip Header */}
+            <div className="p-4 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <DayflowLogo iconSize={24} />
+                <p className="text-[11px] text-slate-400 mt-1">Acme Corporation India Pvt Ltd • HRMS Division</p>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 space-y-2">
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block border-b border-slate-200 dark:border-slate-800 pb-1">
-                    Earnings
-                  </span>
-                  <div className="flex justify-between text-slate-700 dark:text-slate-300">
-                    <span>Basic:</span>
-                    <span className="font-mono font-semibold">₹{selectedRecord.basicSalary?.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-700 dark:text-slate-300">
-                    <span>HRA:</span>
-                    <span className="font-mono font-semibold">₹{selectedRecord.hra?.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-700 dark:text-slate-300">
-                    <span>Allowances:</span>
-                    <span className="font-mono font-semibold">₹{selectedRecord.allowances?.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold pt-1 border-t border-slate-200 dark:border-slate-800">
-                    <span>Gross:</span>
-                    <span className="font-mono">₹{selectedRecord.grossSalary?.toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 space-y-2">
-                  <span className="font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider block border-b border-slate-200 dark:border-slate-800 pb-1">
-                    Deductions
-                  </span>
-                  <div className="flex justify-between text-slate-700 dark:text-slate-300">
-                    <span>PF:</span>
-                    <span className="font-mono font-semibold">₹{(selectedRecord.deductions?.pf || 0)?.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-700 dark:text-slate-300">
-                    <span>Tax:</span>
-                    <span className="font-mono font-semibold">₹{(selectedRecord.deductions?.tax || 0)?.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-700 dark:text-slate-300">
-                    <span>Unpaid Leave:</span>
-                    <span className="font-mono font-semibold">₹{(selectedRecord.deductions?.unpaidLeaveDeduction || 0)?.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-rose-600 dark:text-rose-400 font-bold pt-1 border-t border-slate-200 dark:border-slate-800">
-                    <span>Total Deductions:</span>
-                    <span className="font-mono">₹{(selectedRecord.grossSalary - selectedRecord.netSalary)?.toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-brand-50 dark:bg-brand-950/50 border border-brand-200 dark:border-brand-500/30 flex justify-between items-center">
-                <span className="text-brand-700 dark:text-brand-300 font-bold">Net Salary Payable:</span>
-                <span className="text-2xl font-black text-slate-900 dark:text-white font-mono">
-                  ₹{selectedRecord.netSalary?.toLocaleString('en-IN')}
+              <div className="text-right">
+                <span className="font-mono text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  REF: SLIP-{selectedRecord.year}{String(selectedRecord.month).padStart(2, '0')}-{selectedRecord.userId?.employeeId}
                 </span>
+                <Badge variant={selectedRecord.paymentStatus === 'Paid' ? 'success' : 'warning'} dot size="xs" className="mt-1">
+                  Disbursement: {selectedRecord.paymentStatus}
+                </Badge>
               </div>
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-200 dark:border-slate-800">
-              <button
-                onClick={() => setShowViewModal(false)}
-                className="px-5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold"
+            {/* Employee Identification */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <div>
+                <span className="text-[10px] text-slate-400 block uppercase font-semibold">Employee Name</span>
+                <strong className="text-slate-900 dark:text-white font-semibold">{selectedRecord.userId?.name}</strong>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 block uppercase font-semibold">Employee ID</span>
+                <strong className="text-slate-900 dark:text-white font-mono">{selectedRecord.userId?.employeeId}</strong>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 block uppercase font-semibold">Department</span>
+                <strong className="text-slate-900 dark:text-white">{selectedRecord.userId?.department}</strong>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 block uppercase font-semibold">Designation</span>
+                <strong className="text-slate-900 dark:text-white">{selectedRecord.userId?.designation}</strong>
+              </div>
+            </div>
+
+            {/* Earnings & Deductions Breakdown */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Earnings */}
+              <div className="rounded-lg border border-slate-200/80 dark:border-slate-800 overflow-hidden">
+                <div className="px-3 py-2 bg-slate-50 dark:bg-slate-950/60 font-semibold border-b border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white">
+                  Earnings (Allowances)
+                </div>
+                <div className="p-3 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-300">Basic Salary</span>
+                    <span className="font-mono tabular-nums font-medium">₹{selectedRecord.basicSalary.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-300">House Rent Allowance (HRA)</span>
+                    <span className="font-mono tabular-nums font-medium">₹{selectedRecord.hra.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-300">Special Allowances</span>
+                    <span className="font-mono tabular-nums font-medium">₹{selectedRecord.allowances.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between font-bold">
+                    <span>Gross Earnings</span>
+                    <span className="font-mono tabular-nums text-brand-600 dark:text-brand-400">
+                      ₹{selectedRecord.grossSalary.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Deductions */}
+              <div className="rounded-lg border border-slate-200/80 dark:border-slate-800 overflow-hidden">
+                <div className="px-3 py-2 bg-slate-50 dark:bg-slate-950/60 font-semibold border-b border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white">
+                  Statutory Deductions
+                </div>
+                <div className="p-3 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-300">Income Tax (TDS)</span>
+                    <span className="font-mono tabular-nums font-medium text-rose-600 dark:text-rose-400">
+                      ₹{(selectedRecord.deductions?.tax || 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-300">Provident Fund (PF)</span>
+                    <span className="font-mono tabular-nums font-medium text-rose-600 dark:text-rose-400">
+                      ₹{(selectedRecord.deductions?.pf || 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-300">Unpaid Leave Deductions</span>
+                    <span className="font-mono tabular-nums font-medium text-rose-600 dark:text-rose-400">
+                      ₹{(selectedRecord.deductions?.unpaidLeaveDeduction || 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between font-bold">
+                    <span>Total Deductions</span>
+                    <span className="font-mono tabular-nums text-rose-600 dark:text-rose-400">
+                      ₹{(
+                        (selectedRecord.deductions?.tax || 0) +
+                        (selectedRecord.deductions?.pf || 0) +
+                        (selectedRecord.deductions?.unpaidLeaveDeduction || 0)
+                      ).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Net Salary Highlight */}
+            <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/30 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-400 tracking-wider">
+                  Total Net Payable
+                </span>
+                <div className="text-2xl font-bold font-mono text-emerald-800 dark:text-emerald-300 tabular-nums">
+                  ₹{selectedRecord.netSalary.toLocaleString('en-IN')}
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                icon={Printer}
+                onClick={() => {
+                  window.print();
+                }}
               >
-                Close
-              </button>
+                Print Statement
+              </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 };

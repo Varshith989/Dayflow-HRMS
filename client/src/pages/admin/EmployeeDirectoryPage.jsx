@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Users,
   Search,
-  Filter,
   UserPlus,
   Edit2,
   Eye,
@@ -12,29 +12,51 @@ import {
   X,
   Save,
   Check,
+  Download,
+  Phone,
+  MapPin,
+  HeartHandshake,
+  Calendar,
   AlertCircle,
+  ExternalLink,
 } from 'lucide-react';
 import api from '../../api/client';
 import { useToast } from '../../context/ToastContext';
 import demoAvatars from '../../utils/avatars';
 import { format } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
 import { useEmployeeInspection } from '../../context/EmployeeInspectionContext';
 
-const EmployeeDirectoryPage = () => {
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Input } from '../../components/ui/Input';
+import { FilterBar } from '../../components/ui/FilterBar';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table';
+import { Modal } from '../../components/ui/Modal';
+import { Drawer } from '../../components/ui/Drawer';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { SkeletonTable } from '../../components/ui/Skeleton';
+
+export const EmployeeDirectoryPage = () => {
   const navigate = useNavigate();
   const { selectEmployee } = useEmployeeInspection();
+  const toast = useToast();
+
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedDept, setSelectedDept] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
+  const [density, setDensity] = useState('comfortable');
 
-  // Modals state
+  // Sorting
+  const [sortField, setSortField] = useState('name');
+  const [sortDir, setSortDir] = useState('asc');
+
+  // Modals & Drawer State
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewDrawerOpen, setViewDrawerOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -53,8 +75,6 @@ const EmployeeDirectoryPage = () => {
     emergencyContact: { name: '', relation: '', phone: '+91 ' },
   });
 
-  const toast = useToast();
-
   const fetchEmployees = async () => {
     try {
       setLoading(true);
@@ -65,7 +85,7 @@ const EmployeeDirectoryPage = () => {
 
       const res = await api.get('/users', { params });
       if (res.data.success) {
-        setEmployees(res.data.employees);
+        setEmployees(res.data.employees || []);
         if (res.data.departments) setDepartments(res.data.departments);
       }
     } catch (error) {
@@ -83,7 +103,7 @@ const EmployeeDirectoryPage = () => {
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       fetchEmployees();
-    }, 300);
+    }, 250);
     return () => clearTimeout(delayDebounce);
   }, [search]);
 
@@ -98,7 +118,7 @@ const EmployeeDirectoryPage = () => {
     try {
       const res = await api.post('/users', newEmployee);
       if (res.data.success) {
-        toast.success(res.data.message);
+        toast.success(res.data.message || 'Employee onboarded successfully');
         setShowAddModal(false);
         setNewEmployee({
           name: '',
@@ -146,7 +166,7 @@ const EmployeeDirectoryPage = () => {
     try {
       const res = await api.put(`/users/${employee._id}`, { status: newStatus });
       if (res.data.success) {
-        toast.success(`Status updated to ${newStatus}`);
+        toast.success(`Status for ${employee.name} updated to ${newStatus}`);
         fetchEmployees();
       }
     } catch (error) {
@@ -154,622 +174,658 @@ const EmployeeDirectoryPage = () => {
     }
   };
 
-  const activeCount = employees.filter((e) => e.status === 'Active').length;
+  const exportCSV = () => {
+    const headers = ['Employee ID', 'Name', 'Email', 'Role', 'Department', 'Designation', 'Status', 'Paid Leaves', 'Sick Leaves'];
+    const rows = sortedEmployees.map((e) => [
+      e.employeeId,
+      `"${e.name}"`,
+      e.email,
+      e.role,
+      `"${e.department}"`,
+      `"${e.designation}"`,
+      e.status,
+      e.leaveBalance?.paid || 0,
+      e.leaveBalance?.sick || 0,
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `dayflow-employees-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Employee roster exported to CSV');
+  };
+
+  // Sorting
+  const toggleSort = (field) => {
+    if (sortField === field) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
+  };
+
+  const sortedEmployees = [...employees].sort((a, b) => {
+    let aVal = a[sortField] || '';
+    let bVal = b[sortField] || '';
+    if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+    if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+
+    if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const activeFilters = [];
+  if (selectedDept !== 'All') {
+    activeFilters.push({
+      key: 'dept',
+      label: 'Dept',
+      displayValue: selectedDept,
+      onRemove: () => setSelectedDept('All'),
+    });
+  }
+  if (selectedStatus !== 'All') {
+    activeFilters.push({
+      key: 'status',
+      label: 'Status',
+      displayValue: selectedStatus,
+      onRemove: () => setSelectedStatus('All'),
+    });
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner & Metric summary */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80 dark:border-slate-800/80">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Employee Directory
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Manage organization workforce, departmental distribution, and staff onboarding.
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Employee Directory
+            </h1>
+            <Badge variant="neutral" size="sm">
+              {employees.length} Personnel
+            </Badge>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Organization staff profiles, roles, departmental assignments, and leave allowances.
           </p>
         </div>
 
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-glow flex items-center gap-2 transition-all shrink-0"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>Onboard New Employee</span>
-        </button>
-      </div>
-
-      {/* Stats Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-card flex items-center justify-between">
-          <div>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
-              Total Workforce
-            </span>
-            <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">{employees.length}</div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center">
-            <Users className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-card flex items-center justify-between">
-          <div>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
-              Active Staff
-            </span>
-            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{activeCount}</div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-card flex items-center justify-between">
-          <div>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
-              Departments
-            </span>
-            <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1">
-              {departments.length || 5}
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-            <Building className="w-5 h-5" />
-          </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={Download}
+            onClick={exportCSV}
+          >
+            Export CSV
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            icon={UserPlus}
+            onClick={() => setShowAddModal(true)}
+          >
+            Onboard Employee
+          </Button>
         </div>
       </div>
 
-      {/* Search & Filters Bar */}
-      <div className="p-4 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-card flex flex-col md:flex-row items-center justify-between gap-4">
-        {/* Search input */}
-        <div className="relative w-full md:w-80">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-            <Search className="w-4 h-4" />
-          </div>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search employee name, ID, role..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"
-          />
-        </div>
-
-        {/* Filter Dropdowns */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <div className="flex items-center gap-2">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-xs text-slate-500 dark:text-slate-400">Dept:</span>
-            <select
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-              className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
-            >
-              <option value="All">All Departments</option>
-              <option value="Engineering">Engineering</option>
-              <option value="Product Design">Product Design</option>
-              <option value="Sales & Marketing">Sales & Marketing</option>
-              <option value="Human Resources">Human Resources</option>
-              <option value="Finance">Finance</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 dark:text-slate-400">Status:</span>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
-            >
-              <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-        </div>
-      </div>
+      {/* Filter Bar */}
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Filter by name, ID, role, or email..."
+        filters={[
+          {
+            key: 'dept',
+            label: 'Department',
+            value: selectedDept,
+            onChange: setSelectedDept,
+            options: [
+              { label: 'All Departments', value: 'All' },
+              { label: 'Engineering', value: 'Engineering' },
+              { label: 'Product Design', value: 'Product Design' },
+              { label: 'Sales & Marketing', value: 'Sales & Marketing' },
+              { label: 'Human Resources', value: 'Human Resources' },
+              { label: 'Finance', value: 'Finance' },
+            ],
+          },
+          {
+            key: 'status',
+            label: 'Status',
+            value: selectedStatus,
+            onChange: setSelectedStatus,
+            options: [
+              { label: 'All Statuses', value: 'All' },
+              { label: 'Active', value: 'Active' },
+              { label: 'Inactive', value: 'Inactive' },
+            ],
+          },
+        ]}
+        activeFilters={activeFilters}
+        onClearAll={() => {
+          setSelectedDept('All');
+          setSelectedStatus('All');
+          setSearch('');
+        }}
+        density={density}
+        onDensityChange={setDensity}
+      />
 
       {/* Employees Table */}
-      <div className="rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm dark:shadow-card transition-colors">
-        {loading ? (
-          <div className="p-12 text-center text-slate-500 dark:text-slate-400 flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-sm">Loading employee directory...</span>
-          </div>
-        ) : employees.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 dark:text-slate-400">
-            <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-            <p className="text-sm">No employees match your search filter criteria.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100 dark:bg-slate-950/80 text-slate-600 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
-                <tr>
-                  <th className="px-6 py-4">Employee</th>
-                  <th className="px-6 py-4">ID & Role</th>
-                  <th className="px-6 py-4">Department</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Leave Balances</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
-                {employees.map((emp) => (
-                  <tr
-                    key={emp._id}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-850/50 transition-colors group"
+      {loading ? (
+        <SkeletonTable rows={6} cols={6} />
+      ) : sortedEmployees.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          title="No employees match your search"
+          description="Try broadening your department filters or clearing your search term."
+          action={
+            <Button
+              variant="secondary"
+              size="xs"
+              onClick={() => {
+                setSearch('');
+                setSelectedDept('All');
+                setSelectedStatus('All');
+              }}
+            >
+              Clear All Filters
+            </Button>
+          }
+        />
+      ) : (
+        <Table>
+          <TableHeader>
+            <tr>
+              <TableHead sortable onSort={() => toggleSort('name')} sortDirection={sortField === 'name' ? sortDir : null}>
+                Employee
+              </TableHead>
+              <TableHead sortable onSort={() => toggleSort('employeeId')} sortDirection={sortField === 'employeeId' ? sortDir : null}>
+                Staff ID & Role
+              </TableHead>
+              <TableHead sortable onSort={() => toggleSort('department')} sortDirection={sortField === 'department' ? sortDir : null}>
+                Department & Title
+              </TableHead>
+              <TableHead sortable onSort={() => toggleSort('status')} sortDirection={sortField === 'status' ? sortDir : null}>
+                Status
+              </TableHead>
+              <TableHead>
+                Leave Balances
+              </TableHead>
+              <TableHead className="text-right">
+                Actions
+              </TableHead>
+            </tr>
+          </TableHeader>
+          <TableBody>
+            {sortedEmployees.map((emp) => (
+              <TableRow key={emp._id}>
+                {/* Avatar & Name */}
+                <TableCell density={density}>
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src={emp.avatar || demoAvatars.generic(emp.name)}
+                      alt={emp.name}
+                      className="w-8 h-8 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <div className="font-semibold text-slate-900 dark:text-white truncate">
+                        {emp.name}
+                      </div>
+                      <div className="text-[11px] text-slate-400 truncate">
+                        {emp.email}
+                      </div>
+                    </div>
+                  </div>
+                </TableCell>
+
+                {/* ID & Role */}
+                <TableCell density={density}>
+                  <span className="font-mono text-xs font-semibold text-slate-800 dark:text-slate-200">
+                    {emp.employeeId}
+                  </span>
+                  <div className="mt-0.5">
+                    <Badge variant={emp.role === 'admin' ? 'warning' : 'brand'} size="xs">
+                      {emp.role}
+                    </Badge>
+                  </div>
+                </TableCell>
+
+                {/* Department & Designation */}
+                <TableCell density={density}>
+                  <div className="font-medium text-slate-900 dark:text-slate-200">
+                    {emp.department}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {emp.designation}
+                  </div>
+                </TableCell>
+
+                {/* Status Toggle */}
+                <TableCell density={density}>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleStatus(emp)}
+                    title="Click to toggle status"
+                    className="group"
                   >
-                    {/* Employee avatar & name */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={emp.avatar || demoAvatars.generic(emp.name?.slice(0, 2))}
-                          alt={emp.name}
-                          className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
-                        />
-                        <div>
-                          <div className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-300 transition-colors">
-                            {emp.name}
-                          </div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
-                            <Mail className="w-3 h-3 text-slate-400" />
-                            {emp.email}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
+                    <Badge
+                      variant={emp.status === 'Active' ? 'success' : 'danger'}
+                      dot
+                      size="xs"
+                      className="cursor-pointer group-hover:ring-1 group-hover:ring-current"
+                    >
+                      {emp.status}
+                    </Badge>
+                  </button>
+                </TableCell>
 
-                    {/* ID & Role */}
-                    <td className="px-6 py-4">
-                      <div className="font-mono text-xs font-semibold text-slate-800 dark:text-slate-200">
-                        {emp.employeeId}
-                      </div>
-                      <span
-                        className={`inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                          emp.role === 'admin'
-                            ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25'
-                            : 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/25'
-                        }`}
-                      >
-                        {emp.role}
-                      </span>
-                    </td>
+                {/* Leave Balances */}
+                <TableCell density={density}>
+                  <div className="flex items-center gap-1.5 tabular-nums text-[11px]">
+                    <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      Paid: <strong className="text-emerald-600 dark:text-emerald-400">{emp.leaveBalance?.paid ?? 0}</strong>
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      Sick: <strong className="text-brand-600 dark:text-brand-400">{emp.leaveBalance?.sick ?? 0}</strong>
+                    </span>
+                  </div>
+                </TableCell>
 
-                    {/* Department & Designation */}
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-900 dark:text-slate-200">{emp.department}</div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{emp.designation}</div>
-                    </td>
+                {/* Row Actions */}
+                <TableCell density={density} className="text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    {/* 360 Inspection Button */}
+                    <Button
+                      variant="outline"
+                      size="xs"
+                      icon={Eye}
+                      onClick={() => {
+                        selectEmployee(emp, 'dashboard');
+                        navigate('/admin/employee-view');
+                      }}
+                      title="Inspect 360° Context"
+                    >
+                      <span className="hidden sm:inline">360° View</span>
+                    </Button>
 
-                    {/* Status Badge */}
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => handleToggleStatus(emp)}
-                        title="Click to toggle status"
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
-                          emp.status === 'Active'
-                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 hover:bg-emerald-500/25'
-                            : 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/25 hover:bg-rose-500/25'
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            emp.status === 'Active' ? 'bg-emerald-500' : 'bg-rose-500'
-                          }`}
-                        />
-                        {emp.status}
-                      </button>
-                    </td>
+                    {/* Quick View Drawer */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedEmployee(emp);
+                        setViewDrawerOpen(true);
+                      }}
+                      title="Quick Preview"
+                      className="p-1 rounded-md text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                    </button>
 
-                    {/* Leave balance */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[11px]">
-                          Paid: <strong className="text-emerald-600 dark:text-emerald-400">{emp.leaveBalance?.paid || 0}</strong>
-                        </span>
-                        <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[11px]">
-                          Sick: <strong className="text-brand-600 dark:text-brand-400">{emp.leaveBalance?.sick || 0}</strong>
-                        </span>
-                      </div>
-                    </td>
+                    {/* Edit Details */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedEmployee(JSON.parse(JSON.stringify(emp)));
+                        setShowEditModal(true);
+                      }}
+                      title="Edit Employee"
+                      className="p-1 rounded-md text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
 
-                    {/* Action buttons */}
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            selectEmployee(emp, 'dashboard');
-                            navigate('/admin/employee-view');
-                          }}
-                          title="Inspect Full Employee Context"
-                          className="px-2.5 py-1.5 rounded-lg bg-brand-500/10 hover:bg-brand-500 text-brand-700 dark:text-brand-300 hover:text-white border border-brand-500/30 text-xs font-bold transition-all shadow-xs flex items-center gap-1"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">Context</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedEmployee(emp);
-                            setShowViewModal(true);
-                          }}
-                          title="Quick View Modal"
-                          className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"
-                        >
-                          <Users className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedEmployee(JSON.parse(JSON.stringify(emp)));
-                            setShowEditModal(true);
-                          }}
-                          title="Edit Details"
-                          className="p-1.5 rounded-lg bg-brand-600/15 hover:bg-brand-600 text-brand-700 dark:text-brand-300 hover:text-white transition-all"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* QUICK VIEW DRAWER */}
+      <Drawer
+        isOpen={viewDrawerOpen}
+        onClose={() => setViewDrawerOpen(false)}
+        title={selectedEmployee?.name}
+        subtitle={`${selectedEmployee?.designation} • ${selectedEmployee?.department}`}
+        footer={
+          <>
+            <Button
+              variant="outline"
+              size="xs"
+              onClick={() => setViewDrawerOpen(false)}
+            >
+              Close
+            </Button>
+            <Button
+              variant="primary"
+              size="xs"
+              icon={ExternalLink}
+              onClick={() => {
+                selectEmployee(selectedEmployee, 'dashboard');
+                navigate('/admin/employee-view');
+              }}
+            >
+              Full 360° Inspection
+            </Button>
+          </>
+        }
+      >
+        {selectedEmployee && (
+          <div className="space-y-4 text-xs">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800">
+              <img
+                src={selectedEmployee.avatar || demoAvatars.generic(selectedEmployee.name)}
+                alt={selectedEmployee.name}
+                className="w-12 h-12 rounded-lg object-cover border border-slate-300 dark:border-slate-700"
+              />
+              <div>
+                <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                  {selectedEmployee.name}
+                </h4>
+                <p className="text-slate-500">{selectedEmployee.email}</p>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <Badge variant="brand" size="xs">
+                    {selectedEmployee.employeeId}
+                  </Badge>
+                  <Badge variant={selectedEmployee.status === 'Active' ? 'success' : 'danger'} dot size="xs">
+                    {selectedEmployee.status}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h5 className="font-semibold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
+                Employment & Role
+              </h5>
+              <div className="grid grid-cols-2 gap-2 text-slate-600 dark:text-slate-300">
+                <div className="p-2 rounded bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[10px] text-slate-400 block">Department</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">{selectedEmployee.department}</span>
+                </div>
+                <div className="p-2 rounded bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[10px] text-slate-400 block">Designation</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">{selectedEmployee.designation}</span>
+                </div>
+                <div className="p-2 rounded bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[10px] text-slate-400 block">Joining Date</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">
+                    {selectedEmployee.joiningDate ? format(new Date(selectedEmployee.joiningDate), 'MMM do, yyyy') : '—'}
+                  </span>
+                </div>
+                <div className="p-2 rounded bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[10px] text-slate-400 block">Phone</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">{selectedEmployee.phone || '—'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h5 className="font-semibold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
+                Leave Balances
+              </h5>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="p-2 rounded text-center bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40">
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-medium">Paid</span>
+                  <span className="text-base font-bold text-emerald-700 dark:text-emerald-300">
+                    {selectedEmployee.leaveBalance?.paid || 0}
+                  </span>
+                </div>
+                <div className="p-2 rounded text-center bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/40">
+                  <span className="text-[10px] text-brand-600 dark:text-brand-400 block font-medium">Sick</span>
+                  <span className="text-base font-bold text-brand-700 dark:text-brand-300">
+                    {selectedEmployee.leaveBalance?.sick || 0}
+                  </span>
+                </div>
+                <div className="p-2 rounded text-center bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                  <span className="text-[10px] text-slate-500 block font-medium">Unpaid</span>
+                  <span className="text-base font-bold text-slate-700 dark:text-slate-300">
+                    {selectedEmployee.leaveBalance?.unpaid || 0}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {selectedEmployee.emergencyContact?.name && (
+              <div className="space-y-2">
+                <h5 className="font-semibold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
+                  Emergency Contact
+                </h5>
+                <div className="p-2.5 rounded bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 space-y-1">
+                  <div className="font-medium text-slate-900 dark:text-white">
+                    {selectedEmployee.emergencyContact.name}{' '}
+                    <span className="text-slate-400">({selectedEmployee.emergencyContact.relation})</span>
+                  </div>
+                  <div className="text-slate-500">{selectedEmployee.emergencyContact.phone}</div>
+                </div>
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </Drawer>
 
-      {/* MODAL 1: ADD NEW EMPLOYEE */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6 my-8 transition-colors">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center">
-                  <UserPlus className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Onboard New Employee</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Add team member to WorkZen workforce</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+      {/* ONBOARD NEW EMPLOYEE MODAL */}
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        title="Onboard New Employee"
+        subtitle="Provision employee profile, initial credentials, and departmental assignment"
+        icon={UserPlus}
+        size="lg"
+      >
+        <form onSubmit={handleCreateEmployee} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <Input
+              label="Full Name"
+              required
+              placeholder="e.g. Rahul Verma"
+              value={newEmployee.name}
+              onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
+            />
+            <Input
+              label="Work Email"
+              type="email"
+              required
+              placeholder="e.g. rahul@dayflow.com"
+              value={newEmployee.email}
+              onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Department <span className="text-rose-500">*</span>
+              </label>
+              <select
+                value={newEmployee.department}
+                onChange={(e) => setNewEmployee({ ...newEmployee, department: e.target.value })}
+                className="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20"
               >
-                <X className="w-5 h-5" />
-              </button>
+                <option value="Engineering">Engineering</option>
+                <option value="Product Design">Product Design</option>
+                <option value="Sales & Marketing">Sales & Marketing</option>
+                <option value="Human Resources">Human Resources</option>
+                <option value="Finance">Finance</option>
+              </select>
             </div>
 
-            <form onSubmit={handleCreateEmployee} className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newEmployee.name}
-                    onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
-                    placeholder="e.g. Ramesh Patel"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                  />
-                </div>
+            <Input
+              label="Job Title / Designation"
+              required
+              placeholder="e.g. Frontend Engineer"
+              value={newEmployee.designation}
+              onChange={(e) => setNewEmployee({ ...newEmployee, designation: e.target.value })}
+            />
 
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Work Email *</label>
-                  <input
-                    type="email"
-                    required
-                    value={newEmployee.email}
-                    onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
-                    placeholder="ramesh@workzen.com"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Role *</label>
-                  <select
-                    value={newEmployee.role}
-                    onChange={(e) => setNewEmployee({ ...newEmployee, role: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                  >
-                    <option value="employee">Employee</option>
-                    <option value="admin">Admin / HR</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Department *</label>
-                  <select
-                    value={newEmployee.department}
-                    onChange={(e) => setNewEmployee({ ...newEmployee, department: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                  >
-                    <option value="Engineering">Engineering</option>
-                    <option value="Product Design">Product Design</option>
-                    <option value="Sales & Marketing">Sales & Marketing</option>
-                    <option value="Human Resources">Human Resources</option>
-                    <option value="Finance">Finance</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Designation *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newEmployee.designation}
-                    onChange={(e) =>
-                      setNewEmployee({ ...newEmployee, designation: e.target.value })
-                    }
-                    placeholder="e.g. Backend Engineer"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
-                  <input
-                    type="text"
-                    value={newEmployee.phone}
-                    onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
-                    placeholder="+91 98765 43210"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold shadow-glow flex items-center gap-2 disabled:opacity-50"
-                >
-                  {actionLoading ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <Check className="w-4 h-4" />
-                  )}
-                  Save & Onboard
-                </button>
-              </div>
-            </form>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Role Permission <span className="text-rose-500">*</span>
+              </label>
+              <select
+                value={newEmployee.role}
+                onChange={(e) => setNewEmployee({ ...newEmployee, role: e.target.value })}
+                className="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              >
+                <option value="employee">Employee</option>
+                <option value="admin">HR Admin</option>
+              </select>
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* MODAL 2: EDIT EMPLOYEE */}
-      {showEditModal && selectedEmployee && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6 my-8 transition-colors">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center">
-                  <Edit2 className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                    Edit Employee • {selectedEmployee.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{selectedEmployee.employeeId}</p>
-                </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <Input
+              label="Contact Phone"
+              placeholder="+91 9876543210"
+              value={newEmployee.phone}
+              onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
+            />
+            <Input
+              label="Joining Date"
+              type="date"
+              value={newEmployee.joiningDate}
+              onChange={(e) => setNewEmployee({ ...newEmployee, joiningDate: e.target.value })}
+            />
+          </div>
+
+          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
+            <strong>Default Password:</strong> An initial temporary password <code>employee123</code> is assigned. The staff member will be required to configure their security settings upon first authentication.
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowAddModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              type="submit"
+              loading={actionLoading}
+              icon={UserPlus}
+            >
+              Onboard Employee
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* EDIT EMPLOYEE MODAL */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title={`Edit Profile: ${selectedEmployee?.name}`}
+        subtitle="Modify employment status, department, and contact information"
+        icon={Edit2}
+        size="lg"
+      >
+        {selectedEmployee && (
+          <form onSubmit={handleUpdateEmployee} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <Input
+                label="Full Name"
+                required
+                value={selectedEmployee.name}
+                onChange={(e) => setSelectedEmployee({ ...selectedEmployee, name: e.target.value })}
+              />
+              <Input
+                label="Work Email"
+                type="email"
+                required
+                value={selectedEmployee.email}
+                onChange={(e) => setSelectedEmployee({ ...selectedEmployee, email: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Department
+                </label>
+                <select
+                  value={selectedEmployee.department}
+                  onChange={(e) => setSelectedEmployee({ ...selectedEmployee, department: e.target.value })}
+                  className="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                >
+                  <option value="Engineering">Engineering</option>
+                  <option value="Product Design">Product Design</option>
+                  <option value="Sales & Marketing">Sales & Marketing</option>
+                  <option value="Human Resources">Human Resources</option>
+                  <option value="Finance">Finance</option>
+                </select>
               </div>
-              <button
+
+              <Input
+                label="Designation"
+                value={selectedEmployee.designation}
+                onChange={(e) => setSelectedEmployee({ ...selectedEmployee, designation: e.target.value })}
+              />
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Status
+                </label>
+                <select
+                  value={selectedEmployee.status}
+                  onChange={(e) => setSelectedEmployee({ ...selectedEmployee, status: e.target.value })}
+                  className="w-full py-2 px-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <Input
+                label="Phone"
+                value={selectedEmployee.phone || ''}
+                onChange={(e) => setSelectedEmployee({ ...selectedEmployee, phone: e.target.value })}
+              />
+              <Input
+                label="City / Location"
+                value={selectedEmployee.address?.city || ''}
+                onChange={(e) =>
+                  setSelectedEmployee({
+                    ...selectedEmployee,
+                    address: { ...(selectedEmployee.address || {}), city: e.target.value },
+                  })
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => setShowEditModal(false)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
               >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdateEmployee} className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    value={selectedEmployee.name}
-                    onChange={(e) =>
-                      setSelectedEmployee({ ...selectedEmployee, name: e.target.value })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Work Email</label>
-                  <input
-                    type="email"
-                    value={selectedEmployee.email}
-                    onChange={(e) =>
-                      setSelectedEmployee({ ...selectedEmployee, email: e.target.value })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Department</label>
-                  <select
-                    value={selectedEmployee.department}
-                    onChange={(e) =>
-                      setSelectedEmployee({ ...selectedEmployee, department: e.target.value })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                  >
-                    <option value="Engineering">Engineering</option>
-                    <option value="Product Design">Product Design</option>
-                    <option value="Sales & Marketing">Sales & Marketing</option>
-                    <option value="Human Resources">Human Resources</option>
-                    <option value="Finance">Finance</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Designation</label>
-                  <input
-                    type="text"
-                    value={selectedEmployee.designation}
-                    onChange={(e) =>
-                      setSelectedEmployee({ ...selectedEmployee, designation: e.target.value })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Status</label>
-                  <select
-                    value={selectedEmployee.status}
-                    onChange={(e) =>
-                      setSelectedEmployee({ ...selectedEmployee, status: e.target.value })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
-                  <input
-                    type="text"
-                    value={selectedEmployee.phone || ''}
-                    onChange={(e) =>
-                      setSelectedEmployee({ ...selectedEmployee, phone: e.target.value })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold shadow-glow flex items-center gap-2 disabled:opacity-50"
-                >
-                  {actionLoading ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <Save className="w-4 h-4" />
-                  )}
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 3: VIEW EMPLOYEE DETAILS */}
-      {showViewModal && selectedEmployee && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-6 my-8 transition-colors">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <img
-                  src={selectedEmployee.avatar || demoAvatars.generic(selectedEmployee.name?.slice(0, 2))}
-                  alt={selectedEmployee.name}
-                  className="w-12 h-12 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
-                />
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{selectedEmployee.name}</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {selectedEmployee.employeeId} • {selectedEmployee.designation}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowViewModal(false)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                type="submit"
+                loading={actionLoading}
+                icon={Save}
               >
-                <X className="w-5 h-5" />
-              </button>
+                Save Changes
+              </Button>
             </div>
-
-            <div className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800">
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400 font-medium">Department</span>
-                  <div className="text-slate-900 dark:text-white font-semibold mt-0.5">
-                    {selectedEmployee.department}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400 font-medium">Work Email</span>
-                  <div className="text-slate-900 dark:text-white font-semibold mt-0.5">{selectedEmployee.email}</div>
-                </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400 font-medium">Phone</span>
-                  <div className="text-slate-900 dark:text-white font-semibold mt-0.5">
-                    {selectedEmployee.phone || 'N/A'}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400 font-medium">Status</span>
-                  <div
-                    className={`font-semibold mt-0.5 ${
-                      selectedEmployee.status === 'Active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                    }`}
-                  >
-                    {selectedEmployee.status}
-                  </div>
-                </div>
-              </div>
-
-              {/* Leave Balances */}
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400 font-medium">Paid Leaves</span>
-                  <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                    {selectedEmployee.leaveBalance?.paid || 0} days
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400 font-medium">Sick Leaves</span>
-                  <div className="text-lg font-bold text-brand-600 dark:text-brand-400">
-                    {selectedEmployee.leaveBalance?.sick || 0} days
-                  </div>
-                </div>
-                <div>
-                  <span className="text-slate-500 dark:text-slate-400 font-medium">Total Quota</span>
-                  <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                    {(selectedEmployee.leaveBalance?.paid || 0) +
-                      (selectedEmployee.leaveBalance?.sick || 0)}{' '}
-                    days
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2 border-t border-slate-200 dark:border-slate-800">
-              <button
-                onClick={() => setShowViewModal(false)}
-                className="px-5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </form>
+        )}
+      </Modal>
     </div>
   );
 };

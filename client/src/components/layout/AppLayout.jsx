@@ -1,28 +1,60 @@
-import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import EmployeeContextBanner from '../admin/EmployeeContextBanner';
+import CommandPalette from '../common/CommandPalette';
 
-const AppLayout = () => {
+export const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  // Global Ctrl+K / Cmd+K listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex selection:bg-brand-500 selection:text-white transition-colors duration-200">
-      {/* Background ambient lighting */}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex transition-colors duration-150 antialiased font-sans">
+      {/* Subtle enterprise surface gradient */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute -top-32 right-1/4 w-[500px] h-[500px] bg-brand-500/5 dark:bg-brand-600/10 rounded-full blur-[140px]"></div>
-        <div className="absolute -bottom-32 left-1/3 w-[500px] h-[500px] bg-indigo-500/5 dark:bg-indigo-600/10 rounded-full blur-[140px]"></div>
+        <div className="absolute top-0 right-1/3 w-[600px] h-[350px] bg-brand-500/[0.03] dark:bg-brand-500/[0.04] rounded-full blur-[140px]" />
       </div>
 
+      {/* Global Command Palette */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+      />
+
       {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+      />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 lg:pl-72 relative z-10">
-        <Topbar onMenuClick={() => setSidebarOpen(true)} />
+      <div
+        className={`flex-1 flex flex-col min-w-0 relative z-10 transition-all duration-200 ${
+          isCollapsed ? 'lg:pl-18' : 'lg:pl-64'
+        }`}
+      >
+        <Topbar
+          onMenuClick={() => setSidebarOpen(true)}
+          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+        />
         <EmployeeContextBanner />
-        <main className="flex-1 p-4 sm:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>

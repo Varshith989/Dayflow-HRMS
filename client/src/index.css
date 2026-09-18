@@ -35,11 +35,24 @@
   background: #475569;
 }
 
-/* Card and Glass helpers */
+/* Enterprise Card and Surface helpers */
 .theme-card {
-  @apply bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-card transition-colors duration-200;
+  @apply bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 shadow-subtle dark:shadow-card transition-colors duration-150;
+}
+
+.theme-card-hover {
+  @apply hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-card transition-all duration-150;
 }
 
 .theme-input {
-  @apply bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-colors duration-200;
+  @apply bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-brand-500 dark:focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all duration-150;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle enterprise divider */
+.theme-divider {
+  @apply border-slate-200 dark:border-slate-800/80;
 }

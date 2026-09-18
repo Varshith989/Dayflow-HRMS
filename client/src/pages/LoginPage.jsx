@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Sparkles,
   Shield,
   User,
   Lock,
@@ -17,13 +16,17 @@ import {
   KeyRound,
   CheckCircle2,
   AlertCircle,
+  Building,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../api/client';
 import demoAvatars from '../utils/avatars';
-import WorkZenLogo from '../components/common/WorkZenLogo';
+import DayflowLogo from '../components/common/DayflowLogo';
+import Badge from '../components/ui/Badge';
+import Button from '../components/ui/Button';
 
 const LoginPage = () => {
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'signup' | 'verify'
@@ -87,13 +90,12 @@ const LoginPage = () => {
       if (res.data.success) {
         localStorage.setItem('dayflow_token', res.data.token);
         localStorage.setItem('dayflow_user', JSON.stringify(res.data.user));
-        toast.success(`Welcome to WorkZen, ${res.data.user.name}!`);
+        toast.success(`Welcome to Dayflow HRMS, ${res.data.user.name}!`);
 
         const targetRoute =
           location.state?.from?.pathname ||
           (res.data.user.role === 'admin' ? '/admin' : '/employee');
         
-        // Force window location or navigate to load fresh context
         window.location.href = targetRoute;
       }
     } catch (err) {
@@ -180,31 +182,31 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between relative overflow-hidden transition-colors duration-200">
-      {/* Background glowing orbs */}
+      {/* Background subtle mesh glow */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-500/10 dark:bg-brand-600/15 rounded-full blur-[140px]"></div>
-        <div className="absolute bottom-10 left-10 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-600/10 rounded-full blur-[100px]"></div>
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-brand-500/[0.04] dark:bg-brand-500/[0.07] rounded-full blur-[140px]" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-indigo-500/[0.03] dark:bg-indigo-600/[0.06] rounded-full blur-[100px]" />
       </div>
 
       {/* Header bar */}
-      <header className="relative z-10 px-6 py-4 border-b border-slate-200 dark:border-slate-800/60 bg-white/70 dark:bg-slate-950/40 backdrop-blur-md transition-colors duration-200">
+      <header className="relative z-10 px-6 py-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/70 backdrop-blur-md transition-colors duration-200">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <WorkZenLogo iconSize={36} showTagline={false} />
+          <DayflowLogo size="md" />
 
           <div className="flex items-center gap-3">
             <button
               onClick={toggleTheme}
               title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 text-slate-700 dark:text-slate-300 transition-all flex items-center justify-center shadow-sm"
+              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-300 transition-all flex items-center justify-center shadow-xs"
             >
               {isDark ? (
                 <Sun className="w-4 h-4 text-amber-400" />
               ) : (
-                <Moon className="w-4 h-4 text-indigo-600" />
+                <Moon className="w-4 h-4 text-slate-600" />
               )}
             </button>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium hidden sm:inline-block">
-              Odoo x NMIT Hackathon Edition
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-mono hidden sm:inline-block">
+              v2.4.0 • Enterprise Edition
             </span>
           </div>
         </div>
@@ -214,16 +216,16 @@ const LoginPage = () => {
       <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Form (Login / Sign Up / Verify Email) */}
-          <div className="lg:col-span-6 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-9 shadow-xl dark:shadow-2xl backdrop-blur-xl transition-colors duration-200">
+          <div className="lg:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm transition-colors duration-200">
             
             {/* Mode Switcher Tabs */}
-            <div className="flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 mb-6 text-xs font-bold">
+            <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 mb-6 text-xs font-semibold">
               <button
                 type="button"
                 onClick={() => setAuthMode('login')}
-                className={`flex-1 py-2 rounded-xl transition-all ${
+                className={`flex-1 py-1.5 rounded-lg transition-all ${
                   authMode === 'login'
-                    ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-300 shadow-sm'
+                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-bold'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -232,9 +234,9 @@ const LoginPage = () => {
               <button
                 type="button"
                 onClick={() => setAuthMode('signup')}
-                className={`flex-1 py-2 rounded-xl transition-all ${
+                className={`flex-1 py-1.5 rounded-lg transition-all ${
                   authMode === 'signup'
-                    ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-300 shadow-sm'
+                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-bold'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -243,9 +245,9 @@ const LoginPage = () => {
               <button
                 type="button"
                 onClick={() => setAuthMode('verify')}
-                className={`flex-1 py-2 rounded-xl transition-all ${
+                className={`flex-1 py-1.5 rounded-lg transition-all ${
                   authMode === 'verify'
-                    ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-300 shadow-sm'
+                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-bold'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -257,11 +259,11 @@ const LoginPage = () => {
             {authMode === 'login' && (
               <>
                 <div className="mb-6">
-                  <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                    Sign in to WorkZen
+                  <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    Sign in to Dayflow
                   </h2>
                   <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">
-                    Work smarter. Stay in sync.
+                    Enter your organization credentials to access the workspace.
                   </p>
                 </div>
 
@@ -273,24 +275,26 @@ const LoginPage = () => {
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <User className="w-4 h-4" />
+                        <Mail className="w-4 h-4" />
                       </div>
                       <input
                         type="email"
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="e.g. yourname@company.com"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                        placeholder="e.g. name@dayflow.com"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all"
                       />
                     </div>
                   </div>
 
                   {/* Password field */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                      Password
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                        Password
+                      </label>
+                    </div>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <Lock className="w-4 h-4" />
@@ -300,8 +304,8 @@ const LoginPage = () => {
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Enter your password"
-                        className="w-full pl-10 pr-11 py-2.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
+                        placeholder="Enter password"
+                        className="w-full pl-10 pr-11 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all"
                       />
                       <button
                         type="button"
@@ -314,23 +318,16 @@ const LoginPage = () => {
                   </div>
 
                   {/* Submit button */}
-                  <button
+                  <Button
                     type="submit"
-                    disabled={isSubmitting}
-                    className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-sm shadow-glow flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                    variant="primary"
+                    size="md"
+                    loading={isSubmitting}
+                    icon={ArrowRight}
+                    className="w-full mt-2"
                   >
-                    {isSubmitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>Signing in...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Sign In</span>
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                      </>
-                    )}
-                  </button>
+                    Sign In
+                  </Button>
                 </form>
               </>
             )}
@@ -339,8 +336,8 @@ const LoginPage = () => {
             {authMode === 'signup' && (
               <>
                 <div className="mb-5">
-                  <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                    Create WorkZen Account
+                  <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    Create Dayflow Account
                   </h2>
                   <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">
                     Register a new Employee or HR Administrator identity.
@@ -357,25 +354,25 @@ const LoginPage = () => {
                       <button
                         type="button"
                         onClick={() => setSignupData({ ...signupData, role: 'employee' })}
-                        className={`p-2.5 rounded-xl border text-center font-bold transition-all flex items-center justify-center gap-1.5 ${
+                        className={`p-2 rounded-xl border text-center font-semibold transition-all flex items-center justify-center gap-1.5 ${
                           signupData.role === 'employee'
-                            ? 'bg-brand-50 dark:bg-brand-950/60 border-brand-500 text-brand-700 dark:text-brand-300'
+                            ? 'bg-brand-50/80 dark:bg-brand-950/40 border-brand-500 text-brand-700 dark:text-brand-300'
                             : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                         }`}
                       >
-                        <User className="w-4 h-4" />
+                        <User className="w-3.5 h-3.5" />
                         Employee
                       </button>
                       <button
                         type="button"
                         onClick={() => setSignupData({ ...signupData, role: 'admin' })}
-                        className={`p-2.5 rounded-xl border text-center font-bold transition-all flex items-center justify-center gap-1.5 ${
+                        className={`p-2 rounded-xl border text-center font-semibold transition-all flex items-center justify-center gap-1.5 ${
                           signupData.role === 'admin'
-                            ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-500 text-amber-700 dark:text-amber-300'
+                            ? 'bg-purple-50/80 dark:bg-purple-950/40 border-purple-500 text-purple-700 dark:text-purple-300'
                             : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
                         }`}
                       >
-                        <Shield className="w-4 h-4" />
+                        <Shield className="w-3.5 h-3.5" />
                         HR / Admin
                       </button>
                     </div>
@@ -395,7 +392,7 @@ const LoginPage = () => {
                           setSignupData({ ...signupData, employeeId: e.target.value.toUpperCase() })
                         }
                         placeholder="e.g. EMP-007"
-                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
                       />
                     </div>
 
@@ -408,7 +405,7 @@ const LoginPage = () => {
                         value={signupData.name}
                         onChange={(e) => setSignupData({ ...signupData, name: e.target.value })}
                         placeholder="e.g. Vikramaditya Rao"
-                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
                       />
                     </div>
                   </div>
@@ -424,7 +421,7 @@ const LoginPage = () => {
                       value={signupData.email}
                       onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
                       placeholder="e.g. vikram@dayflow.com"
-                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
                     />
                   </div>
 
@@ -441,7 +438,7 @@ const LoginPage = () => {
                         value={signupData.password}
                         onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
                         placeholder="Create a strong password"
-                        className="w-full pl-3.5 pr-10 py-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+                        className="w-full pl-3.5 pr-10 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
                       />
                       <button
                         type="button"
@@ -453,27 +450,23 @@ const LoginPage = () => {
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                  <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                     <span>
                       After sign-up, your account will be created in an <strong>Unverified</strong> state. You must verify your email before logging in.
                     </span>
                   </div>
 
-                  <button
+                  <Button
                     type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-2.5 px-4 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-xs shadow-glow flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                    variant="primary"
+                    size="md"
+                    loading={isSubmitting}
+                    icon={UserPlus}
+                    className="w-full"
                   >
-                    {isSubmitting ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      <>
-                        <UserPlus className="w-4 h-4" />
-                        <span>Register & Generate Token</span>
-                      </>
-                    )}
-                  </button>
+                    Register Identity
+                  </Button>
                 </form>
               </>
             )}
@@ -482,7 +475,7 @@ const LoginPage = () => {
             {authMode === 'verify' && (
               <>
                 <div className="mb-5">
-                  <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                     Verify Your Email
                   </h2>
                   <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">
@@ -491,12 +484,12 @@ const LoginPage = () => {
                 </div>
 
                 {demoVerificationInfo && (
-                  <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 mb-4 text-xs space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold">
+                  <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 mb-4 text-xs space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-semibold">
                       <CheckCircle2 className="w-4 h-4" /> Demo Verification Ready
                     </div>
                     <p className="text-[11px] text-emerald-800 dark:text-emerald-200">
-                      Token auto-populated below for instant hackathon verification.
+                      Token auto-populated below for instant verification.
                     </p>
                   </div>
                 )}
@@ -514,7 +507,7 @@ const LoginPage = () => {
                         value={verifyEmailInput}
                         onChange={(e) => setVerifyEmailInput(e.target.value)}
                         placeholder="e.g. vikram@dayflow.com"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
                       />
                     </div>
                   </div>
@@ -531,40 +524,36 @@ const LoginPage = () => {
                         value={verifyTokenInput}
                         onChange={(e) => setVerifyTokenInput(e.target.value)}
                         placeholder="Enter verification token"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
                       />
                     </div>
                   </div>
 
-                  <button
+                  <Button
                     type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl text-xs shadow-glow flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                    variant="success"
+                    size="md"
+                    loading={isSubmitting}
+                    icon={BadgeCheck}
+                    className="w-full"
                   >
-                    {isSubmitting ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      <>
-                        <BadgeCheck className="w-4 h-4" />
-                        <span>Verify & Activate Account</span>
-                      </>
-                    )}
-                  </button>
+                    Verify & Activate Account
+                  </Button>
                 </form>
               </>
             )}
 
           </div>
 
-          {/* Right Column: 1-Click Demo Accounts for Hackathon Judges */}
+          {/* Right Column: 1-Click Demo Accounts */}
           <div className="lg:col-span-6 space-y-3">
-            <div className="p-3.5 rounded-2xl bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800/40">
-              <div className="flex items-center gap-2 text-brand-700 dark:text-brand-300 text-xs font-bold uppercase tracking-wider mb-0.5">
-                <Zap className="w-4 h-4 text-amber-500 animate-pulse" />
-                Hackathon Demo Quick Switcher
+            <div className="p-4 rounded-2xl bg-brand-50/70 dark:bg-brand-950/30 border border-brand-200/80 dark:border-brand-800/40">
+              <div className="flex items-center gap-2 text-brand-700 dark:text-brand-300 text-xs font-bold uppercase tracking-wider mb-1">
+                <Zap className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                Demo Credentials & Quick Switcher
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Click any profile card below to sign in instantly with verified Indian demo accounts.
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Click any profile card below to sign in immediately with pre-seeded role permissions and attendance data.
               </p>
             </div>
 
@@ -572,7 +561,7 @@ const LoginPage = () => {
             <button
               type="button"
               onClick={() => handleQuickDemo('admin@dayflow.com', 'admin123')}
-              className="w-full text-left p-3.5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 hover:border-brand-500/80 hover:bg-slate-50 dark:hover:bg-slate-850/90 transition-all group flex items-center justify-between shadow-sm"
+              className="w-full text-left p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-brand-500/80 hover:bg-slate-50/80 dark:hover:bg-slate-850 transition-all group flex items-center justify-between shadow-xs"
             >
               <div className="flex items-center gap-3">
                 <img
@@ -582,24 +571,27 @@ const LoginPage = () => {
                 />
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-300 transition-colors">
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                       Priya Iyer
                     </h4>
-                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25">
+                    <Badge variant="purple" size="xs">
                       HR Admin
-                    </span>
+                    </Badge>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">HR Manager • Bengaluru</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">admin@dayflow.com • HR Operations</p>
                 </div>
               </div>
-              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-brand-500 group-hover:translate-x-1 transition-all" />
+              <div className="flex items-center gap-1.5 text-xs text-brand-600 dark:text-brand-400 font-medium">
+                <span>Sign In</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </div>
             </button>
 
             {/* Employee 1 - Ananya Sharma (Engineering) */}
             <button
               type="button"
               onClick={() => handleQuickDemo('alex@dayflow.com', 'employee123')}
-              className="w-full text-left p-3.5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 hover:border-brand-500/80 hover:bg-slate-50 dark:hover:bg-slate-850/90 transition-all group flex items-center justify-between shadow-sm"
+              className="w-full text-left p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-brand-500/80 hover:bg-slate-50/80 dark:hover:bg-slate-850 transition-all group flex items-center justify-between shadow-xs"
             >
               <div className="flex items-center gap-3">
                 <img
@@ -609,24 +601,27 @@ const LoginPage = () => {
                 />
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-300 transition-colors">
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                       Ananya Sharma
                     </h4>
-                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+                    <Badge variant="brand" size="xs">
                       Engineering
-                    </span>
+                    </Badge>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Senior Fullstack Dev • Bengaluru</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">alex@dayflow.com • Senior Dev</p>
                 </div>
               </div>
-              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-brand-500 group-hover:translate-x-1 transition-all" />
+              <div className="flex items-center gap-1.5 text-xs text-brand-600 dark:text-brand-400 font-medium">
+                <span>Sign In</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </div>
             </button>
 
-            {/* Employee 2 - Rohan Nair (UI/UX Design) */}
+            {/* Employee 2 - Rohan Nair (Design) */}
             <button
               type="button"
               onClick={() => handleQuickDemo('elena@dayflow.com', 'employee123')}
-              className="w-full text-left p-3.5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 hover:border-brand-500/80 hover:bg-slate-50 dark:hover:bg-slate-850/90 transition-all group flex items-center justify-between shadow-sm"
+              className="w-full text-left p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-brand-500/80 hover:bg-slate-50/80 dark:hover:bg-slate-850 transition-all group flex items-center justify-between shadow-xs"
             >
               <div className="flex items-center gap-3">
                 <img
@@ -636,24 +631,27 @@ const LoginPage = () => {
                 />
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-300 transition-colors">
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                       Rohan Nair
                     </h4>
-                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/25">
-                      Design
-                    </span>
+                    <Badge variant="blue" size="xs">
+                      Product Design
+                    </Badge>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Lead UI/UX Designer • Bengaluru</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">elena@dayflow.com • Lead Designer</p>
                 </div>
               </div>
-              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-brand-500 group-hover:translate-x-1 transition-all" />
+              <div className="flex items-center gap-1.5 text-xs text-brand-600 dark:text-brand-400 font-medium">
+                <span>Sign In</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </div>
             </button>
 
             {/* Employee 3 - Arjun Menon (Marketing) */}
             <button
               type="button"
               onClick={() => handleQuickDemo('marcus@dayflow.com', 'employee123')}
-              className="w-full text-left p-3.5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 hover:border-brand-500/80 hover:bg-slate-50 dark:hover:bg-slate-850/90 transition-all group flex items-center justify-between shadow-sm"
+              className="w-full text-left p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-brand-500/80 hover:bg-slate-50/80 dark:hover:bg-slate-850 transition-all group flex items-center justify-between shadow-xs"
             >
               <div className="flex items-center gap-3">
                 <img
@@ -663,25 +661,28 @@ const LoginPage = () => {
                 />
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-300 transition-colors">
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                       Arjun Menon
                     </h4>
-                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25">
+                    <Badge variant="warning" size="xs">
                       Marketing
-                    </span>
+                    </Badge>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Marketing Director • Mumbai</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">marcus@dayflow.com • Marketing Director</p>
                 </div>
               </div>
-              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-brand-500 group-hover:translate-x-1 transition-all" />
+              <div className="flex items-center gap-1.5 text-xs text-brand-600 dark:text-brand-400 font-medium">
+                <span>Sign In</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </div>
             </button>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-4 text-center text-xs text-slate-500 dark:text-slate-500 border-t border-slate-200 dark:border-slate-900 bg-white/60 dark:bg-slate-950/60">
-        WorkZen HRMS • Odoo × NMIT Hackathon 2026 • Made with ❤️ in India
+      <footer className="relative z-10 px-6 py-4 text-center text-xs text-slate-500 dark:text-slate-500 border-t border-slate-200/80 dark:border-slate-900 bg-white/60 dark:bg-slate-950/60">
+        Dayflow HRMS • Enterprise Workforce Management Platform • Production Ready
       </footer>
     </div>
   );
