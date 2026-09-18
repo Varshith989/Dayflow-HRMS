@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   DollarSign,
   Calendar,
@@ -102,12 +102,18 @@ export const PayrollManagementPage = () => {
     }
   };
 
+  const isFirstMount = useRef(true);
+
   useEffect(() => {
     fetchPayrollData();
   }, [selectedMonth, selectedYear, department, paymentStatusFilter]);
 
   // Debounced search
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     const timer = setTimeout(() => {
       fetchPayrollData();
     }, 250);

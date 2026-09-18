@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users,
@@ -95,12 +95,18 @@ export const EmployeeDirectoryPage = () => {
     }
   };
 
+  const isFirstMount = useRef(true);
+
   useEffect(() => {
     fetchEmployees();
   }, [selectedDept, selectedStatus]);
 
   // Debounced search
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     const delayDebounce = setTimeout(() => {
       fetchEmployees();
     }, 250);

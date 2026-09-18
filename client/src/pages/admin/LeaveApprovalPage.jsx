@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   CalendarDays,
   CheckCircle2,
@@ -65,12 +65,18 @@ export const LeaveApprovalPage = () => {
     }
   };
 
+  const isFirstMount = useRef(true);
+
   useEffect(() => {
     fetchLeaves();
   }, [statusFilter, department]);
 
   // Debounced search
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     const timer = setTimeout(() => {
       fetchLeaves();
     }, 250);

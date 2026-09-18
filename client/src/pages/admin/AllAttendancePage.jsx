@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Clock,
   Calendar,
@@ -68,12 +68,18 @@ export const AllAttendancePage = () => {
     }
   };
 
+  const isFirstMount = useRef(true);
+
   useEffect(() => {
     fetchCompanyAttendance();
   }, [selectedDate, department, statusFilter]);
 
   // Debounced search
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     const timer = setTimeout(() => {
       fetchCompanyAttendance();
     }, 250);

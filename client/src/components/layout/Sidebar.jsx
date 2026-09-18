@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -18,11 +18,43 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { DayflowLogo, DayflowIcon } from '../common/DayflowLogo';
+import api from '../../api/client';
 
 export const Sidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse }) => {
   const { user, logout, isAdmin } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
+
+  const handlePrefetch = (path) => {
+    if (path === '/admin') {
+      api.prefetch('/attendance/all');
+      api.prefetch('/users');
+      api.prefetch('/leaves/all?status=Pending');
+      api.prefetch('/salaries/all', { params: { month: 8, year: 2026 } });
+    } else if (path === '/admin/employees') {
+      api.prefetch('/users');
+    } else if (path === '/admin/attendance') {
+      api.prefetch('/attendance/all');
+    } else if (path === '/admin/leaves') {
+      api.prefetch('/leaves/all');
+    } else if (path === '/admin/payroll') {
+      api.prefetch('/salaries/all', { params: { month: 8, year: 2026 } });
+      api.prefetch('/users');
+    } else if (path === '/admin/profile' || path === '/employee/profile') {
+      if (user?._id || user?.id) {
+        api.prefetch(`/users/${user._id || user.id}/documents`);
+      }
+    } else if (path === '/employee') {
+      api.prefetch('/attendance/my-history');
+      api.prefetch('/leaves/my-leaves');
+    } else if (path === '/employee/attendance') {
+      api.prefetch('/attendance/my-history');
+    } else if (path === '/employee/leaves') {
+      api.prefetch('/leaves/my-leaves');
+    } else if (path === '/employee/salary') {
+      api.prefetch('/salaries/my-payslips');
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -194,6 +226,8 @@ export const Sidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse
                       to={item.path}
                       end={item.exact}
                       onClick={() => onClose?.()}
+                      onMouseEnter={() => handlePrefetch(item.path)}
+                      onFocus={() => handlePrefetch(item.path)}
                       title={isCollapsed ? item.label : undefined}
                       className={({ isActive }) =>
                         `flex items-center ${

@@ -1,14 +1,36 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import EmployeeContextBanner from '../admin/EmployeeContextBanner';
 import CommandPalette from '../common/CommandPalette';
+import api from '../../api/client';
 
 export const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  // Warm up data cache in background for instant 0ms tab switching
+  useEffect(() => {
+    const warmCache = () => {
+      api.prefetch('/attendance/all');
+      api.prefetch('/users');
+      api.prefetch('/leaves/all?status=Pending');
+      api.prefetch('/leaves/all');
+      api.prefetch('/salaries/all', { params: { month: 8, year: 2026 } });
+      api.prefetch('/attendance/my-history');
+      api.prefetch('/leaves/my-leaves');
+      api.prefetch('/salaries/my-payslips');
+    };
+
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(warmCache);
+    } else {
+      const timer = setTimeout(warmCache, 250);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // Global Ctrl+K / Cmd+K listener
   useEffect(() => {
