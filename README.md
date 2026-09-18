@@ -1,4 +1,4 @@
-﻿# WorkZen – Human Resource Management System
+# WorkZen – Human Resource Management System
 
 **Human Resource Management System – Odoo × NMIT Hackathon 2026**
 
@@ -14,7 +14,7 @@ WorkZen is a full-stack Human Resource Management System (HRMS) designed to digi
 
 - **Event:** Odoo × NMIT Hackathon 2026
 - **Project:** WorkZen HRMS
-- **Repository:** https://github.com/vaishnavikp156/dayflow-hrms
+- **Repository:** https://github.com/Varshith989/Dayflow-HRMS
 
 ---
 
@@ -463,8 +463,8 @@ The database is pre-seeded with realistic Indian enterprise personas for evaluat
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/vaishnavikp156/dayflow-hrms.git
-cd dayflow-hrms
+git clone https://github.com/Varshith989/Dayflow-HRMS.git
+cd Dayflow-HRMS
 ```
 
 ---
