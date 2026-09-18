@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 const ToastContext = createContext(null);
 
@@ -24,36 +24,51 @@ export const ToastProvider = ({ children }) => {
   const toast = {
     success: (msg, duration) => addToast(msg, 'success', duration),
     error: (msg, duration) => addToast(msg, 'error', duration),
+    warning: (msg, duration) => addToast(msg, 'warning', duration),
     info: (msg, duration) => addToast(msg, 'info', duration),
   };
 
   return (
     <ToastContext.Provider value={{ toast, addToast, removeToast }}>
       {children}
-      {/* Toast Notification Container */}
-      <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-md w-full px-4">
+      {/* Toast Notification Container (Linear/Sonner inspired floating stack) */}
+      <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-4 sm:px-0">
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto flex items-start gap-3 p-4 rounded-xl border shadow-xl backdrop-blur-md transition-all duration-300 transform translate-y-0 ${
-              t.type === 'success'
-                ? 'bg-emerald-950/90 border-emerald-500/30 text-emerald-100 shadow-emerald-950/40'
-                : t.type === 'error'
-                ? 'bg-rose-950/90 border-rose-500/30 text-rose-100 shadow-rose-950/40'
-                : 'bg-slate-900/90 border-slate-700 text-slate-100 shadow-slate-950/40'
-            }`}
+            className="pointer-events-auto flex items-center gap-3 p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-modal backdrop-blur-md transition-all duration-200 animate-in slide-in-from-bottom-2 fade-in"
           >
-            <div className="shrink-0 mt-0.5">
-              {t.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
-              {t.type === 'error' && <AlertCircle className="w-5 h-5 text-rose-400" />}
-              {t.type === 'info' && <Info className="w-5 h-5 text-brand-400" />}
+            <div className="shrink-0">
+              {t.type === 'success' && (
+                <div className="w-6 h-6 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+              )}
+              {t.type === 'error' && (
+                <div className="w-6 h-6 rounded-full bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                  <AlertCircle className="w-4 h-4" />
+                </div>
+              )}
+              {t.type === 'warning' && (
+                <div className="w-6 h-6 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+              )}
+              {t.type === 'info' && (
+                <div className="w-6 h-6 rounded-full bg-brand-500/10 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 flex items-center justify-center">
+                  <Info className="w-4 h-4" />
+                </div>
+              )}
             </div>
-            <div className="flex-1 text-sm font-medium leading-snug">{t.message}</div>
+            <div className="flex-1 text-xs font-medium text-slate-900 dark:text-slate-100 leading-snug">
+              {t.message}
+            </div>
             <button
               onClick={() => removeToast(t.id)}
-              className="shrink-0 text-slate-400 hover:text-white transition-colors"
+              className="shrink-0 p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              title="Dismiss"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         ))}
@@ -69,3 +84,5 @@ export const useToast = () => {
   }
   return context.toast;
 };
+
+export default ToastContext;

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import {
   Menu,
@@ -21,11 +21,26 @@ export const Topbar = ({ onMenuClick, onOpenCommandPalette }) => {
   const location = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [hasUnread, setHasUnread] = useState(true);
+  const notifRef = useRef(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Handle outside click to close notifications dropdown
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotificationsOpen(false);
+      }
+    };
+    if (notificationsOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [notificationsOpen]);
 
   const getBreadcrumbs = () => {
     const path = location.pathname;
@@ -131,7 +146,7 @@ export const Topbar = ({ onMenuClick, onOpenCommandPalette }) => {
         </div>
 
         {/* Notifications Button */}
-        <div className="relative">
+        <div className="relative" ref={notifRef}>
           <button
             type="button"
             onClick={() => setNotificationsOpen(!notificationsOpen)}
@@ -139,7 +154,9 @@ export const Topbar = ({ onMenuClick, onOpenCommandPalette }) => {
             className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative"
           >
             <Bell className="w-4 h-4" />
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-brand-500 ring-2 ring-white dark:ring-slate-900" />
+            {hasUnread && (
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-brand-500 ring-2 ring-white dark:ring-slate-900" />
+            )}
           </button>
 
           {/* Notifications Dropdown */}
@@ -147,9 +164,13 @@ export const Topbar = ({ onMenuClick, onOpenCommandPalette }) => {
             <div className="absolute right-0 mt-2 w-72 sm:w-80 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-dropdown p-3 z-50 animate-in fade-in zoom-in-95 duration-100">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 text-xs">
                 <span className="font-semibold text-slate-900 dark:text-white">Activity & Alerts</span>
-                <span className="text-[10px] text-brand-600 dark:text-brand-400 cursor-pointer hover:underline">
+                <button
+                  type="button"
+                  onClick={() => setHasUnread(false)}
+                  className="text-[10px] text-brand-600 dark:text-brand-400 hover:underline"
+                >
                   Mark all read
-                </span>
+                </button>
               </div>
               <div className="py-2 space-y-2 text-xs">
                 <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-850/60 border border-slate-100 dark:border-slate-800 flex items-start gap-2">
