@@ -1,27 +1,15 @@
-# WorkZen – Human Resource Management System
-
-**Human Resource Management System – Odoo × NMIT Hackathon 2026**
+# Dayflow HRMS – Enterprise Workforce Management System
 
 > **Work smarter. Stay in sync.**
 
-🎥 **[Watch the WorkZen HRMS Demo](https://drive.google.com/file/d/1hB2gaCk_wwG7-I0srsbiXYJldaPYbU1e/view?usp=drivesdk)**
-
-WorkZen is a full-stack Human Resource Management System (HRMS) designed to digitize, centralize, and streamline core workforce workflows — including employee management, attendance, leave, payroll, profile management, and compliance documents — through an intuitive role-based portal.
-
----
-
-## 🏆 Hackathon Details
-
-- **Event:** Odoo × NMIT Hackathon 2026
-- **Project:** WorkZen HRMS
-- **Repository:** https://github.com/Varshith989/Dayflow-HRMS
+Dayflow HRMS is a modern, full-stack Human Resource Management System designed to digitize, centralize, and streamline core workforce workflows — including employee management, attendance, leave approvals, payroll, profile management, and compliance documents — through an intuitive, role-based enterprise portal.
 
 ---
 
 ## 📸 Application Screenshots
 
-### 🔐 WorkZen Authentication
-![WorkZen Login](docs/screenshots/login.png)
+### 🔐 Dayflow Authentication
+![Dayflow Login](docs/screenshots/login.png)
 
 ### 👤 Employee Dashboard
 ![Employee Dashboard](docs/screenshots/employee-dashboard.png)
@@ -40,11 +28,11 @@ WorkZen is a full-stack Human Resource Management System (HRMS) designed to digi
 
 ---
 
-## 💡 Why WorkZen?
+## 💡 Why Dayflow?
 
 Traditional HR workflows often rely on scattered spreadsheets, manual leave tracking, delayed payroll calculations, and disconnected employee records.
 
-**WorkZen** brings these workflows together into one centralized platform.
+**Dayflow** brings these workflows together into one centralized platform.
 
 ### Key Benefits
 
@@ -94,9 +82,9 @@ Traditional HR workflows often rely on scattered spreadsheets, manual leave trac
 - Protected routes
 - Role-based access control
 - Incorrect credential error handling
-- Quick Demo Login for hackathon evaluation
+- Quick Demo Login for instant evaluation
 
-> The email verification flow is implemented without requiring an external SMTP service, making the application reliable for offline hackathon demonstrations.
+> The email verification flow is implemented without requiring an external SMTP service, making the application reliable for self-contained demonstrations.
 
 ---
 
@@ -124,7 +112,7 @@ Admin/HR users can manage employee information across the organization.
 
 ### Avatar System
 
-WorkZen includes custom vector SVG avatars for demo employees.
+Dayflow includes custom vector SVG avatars for demo employees.
 
 The avatars are self-contained and do not depend on external image hosting.
 
@@ -315,14 +303,14 @@ Employees do not have access to this functionality.
 
 # 🎨 UI / UX
 
-WorkZen includes:
+Dayflow includes:
 
 - Modern SaaS-style interface
 - Responsive layout
 - Light mode
 - Dark mode
 - Consistent cards and navigation
-- Custom WorkZen branding
+- Custom Dayflow branding
 - Custom employee avatars
 - Interactive modals
 - Toast notifications
@@ -331,7 +319,7 @@ WorkZen includes:
 
 ### Branding
 
-**WorkZen HRMS**
+**Dayflow HRMS**
 
 > **Work smarter. Stay in sync.**
 
@@ -425,7 +413,7 @@ dayflow-hrms/
 
 The database is pre-seeded with realistic Indian enterprise personas for evaluation:
 
-> **Note:** These accounts are seeded demo credentials specifically created for hackathon evaluation and demonstration.
+> **Note:** These accounts are seeded demo credentials specifically created for system evaluation and demonstration.
 
 ### HR Administrator
 - **Name:** Priya Iyer (HR Operations Lead)
@@ -536,5 +524,5 @@ cd Dayflow-HRMS
 
 # 📄 License & Attribution
 
-Developed for the **Odoo × NMIT Hackathon 2026**.  
+Copyright © 2026 Dayflow HRMS. All rights reserved.  
 Made with ❤️ in India.
