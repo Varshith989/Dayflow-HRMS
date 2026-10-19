@@ -60,6 +60,11 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Pre-warm backend cloud server on mount to wake it up while user enters credentials
+  useEffect(() => {
+    api.get('/health').catch(() => {});
+  }, []);
+
   // Check URL query parameters for token/email
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -83,8 +88,13 @@ const LoginPage = () => {
     }
 
     setIsSubmitting(true);
+    const coldStartTimer = setTimeout(() => {
+      toast.info('Waking up cloud server (Render free-tier cold boot)... Please hold on.');
+    }, 2800);
+
     try {
       const res = await api.post('/auth/login', { email: loginEmail, password: loginPass });
+      clearTimeout(coldStartTimer);
       setIsSubmitting(false);
 
       if (res.data.success) {
@@ -99,6 +109,7 @@ const LoginPage = () => {
         window.location.href = targetRoute;
       }
     } catch (err) {
+      clearTimeout(coldStartTimer);
       setIsSubmitting(false);
       const data = err.response?.data;
       if (data?.unverified) {

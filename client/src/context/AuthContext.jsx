@@ -13,7 +13,18 @@ export const AuthProvider = ({ children }) => {
     }
   });
   const [token, setToken] = useState(() => localStorage.getItem('dayflow_token') || null);
-  const [loading, setLoading] = useState(true);
+  // If user and token already exist in localStorage, boot immediately without cold-start blocking
+  const [loading, setLoading] = useState(() => {
+    try {
+      const hasToken = !!localStorage.getItem('dayflow_token');
+      const hasUser = !!localStorage.getItem('dayflow_user');
+      if (!hasToken) return false;
+      if (hasToken && hasUser) return false;
+      return true;
+    } catch {
+      return false;
+    }
+  });
 
   // Verify session on initial app boot
   useEffect(() => {
