@@ -1,10 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Users,
   Clock,
   Calendar,
-  DollarSign,
+  IndianRupee,
   CheckCircle2,
   Building,
   ArrowRight,
@@ -214,7 +214,7 @@ export const AdminDashboard = () => {
           title="Monthly Payroll (Aug)"
           value={`₹${(payrollStats.totalDisbursed || 568700).toLocaleString('en-IN')}`}
           subtitle="Net disbursed salary"
-          icon={DollarSign}
+          icon={IndianRupee}
           iconClassName="bg-indigo-50 dark:bg-indigo-950/60 text-brand-600 dark:text-brand-400 border-brand-200/60 dark:border-brand-800/60"
           badge="Processed"
         />
@@ -561,7 +561,7 @@ export const AdminDashboard = () => {
             >
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center">
-                  <DollarSign className="w-3.5 h-3.5" />
+                  <IndianRupee className="w-3.5 h-3.5" />
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">

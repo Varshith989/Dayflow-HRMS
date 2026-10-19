@@ -5,7 +5,7 @@ import {
   Users,
   Clock,
   CalendarDays,
-  DollarSign,
+  IndianRupee,
   UserCircle,
   LogOut,
   ChevronRight,
@@ -85,7 +85,7 @@ export const Sidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse
     {
       title: 'Finance',
       items: [
-        { label: 'Payroll', path: '/admin/payroll', icon: DollarSign },
+        { label: 'Payroll', path: '/admin/payroll', icon: IndianRupee },
       ],
     },
     {
@@ -113,7 +113,7 @@ export const Sidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse
     {
       title: 'Compensation',
       items: [
-        { label: 'My Payslips', path: '/employee/salary', icon: DollarSign },
+        { label: 'My Payslips', path: '/employee/salary', icon: IndianRupee },
       ],
     },
     {

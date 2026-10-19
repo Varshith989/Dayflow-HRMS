@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  DollarSign,
+  IndianRupee,
   Calendar,
   CreditCard,
   Plus,
@@ -293,7 +293,7 @@ export const PayrollManagementPage = () => {
           title="Gross Payroll Volume"
           value={`₹${(stats.totalGross || 0).toLocaleString('en-IN')}`}
           subtitle="Pre-tax compensation"
-          icon={DollarSign}
+          icon={IndianRupee}
           iconClassName="bg-indigo-50 dark:bg-indigo-950/60 text-brand-600 dark:text-brand-400 border-brand-200/60 dark:border-brand-800/60"
         />
         <StatCard
@@ -357,7 +357,7 @@ export const PayrollManagementPage = () => {
         <SkeletonTable rows={6} cols={7} />
       ) : records.length === 0 ? (
         <EmptyState
-          icon={DollarSign}
+          icon={IndianRupee}
           title="No payroll records found"
           description={`No payslips generated for ${getMonthName(selectedMonth)} ${selectedYear} matching your criteria.`}
           action={
@@ -497,7 +497,7 @@ export const PayrollManagementPage = () => {
         onClose={() => setShowGenerateModal(false)}
         title="Generate Monthly Payslip"
         subtitle={`Create salary disbursement breakdown for ${getMonthName(selectedMonth)} ${selectedYear}`}
-        icon={DollarSign}
+        icon={IndianRupee}
         size="lg"
       >
         <form onSubmit={handleGeneratePayslip} className="space-y-4">

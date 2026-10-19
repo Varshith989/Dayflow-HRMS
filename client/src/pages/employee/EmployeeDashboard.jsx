@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   Clock,
   Calendar,
-  DollarSign,
+  IndianRupee,
   CheckCircle2,
   CalendarDays,
   Plus,
@@ -384,7 +384,7 @@ export const EmployeeDashboard = () => {
               className="p-3 rounded-lg border border-slate-200/80 dark:border-slate-800 hover:border-brand-500/50 bg-slate-50/50 dark:bg-slate-950/40 hover:bg-slate-100/80 dark:hover:bg-slate-850 flex items-center justify-between transition-all group"
             >
               <div className="flex items-center gap-2.5">
-                <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <IndianRupee className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <div>
                   <div className="text-xs font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                     My Payslips

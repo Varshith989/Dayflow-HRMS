@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  DollarSign,
+  IndianRupee,
   Calendar,
   CreditCard,
   CheckCircle2,

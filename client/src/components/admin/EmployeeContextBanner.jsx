@@ -4,7 +4,7 @@ import {
   User,
   Clock,
   CalendarDays,
-  DollarSign,
+  IndianRupee,
   FileText,
   X,
   Eye,
@@ -26,7 +26,7 @@ export const EmployeeContextBanner = ({ onTabChange }) => {
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'attendance', label: 'Attendance', icon: Clock },
     { id: 'leaves', label: 'Leaves', icon: CalendarDays },
-    { id: 'payroll', label: 'Payroll', icon: DollarSign },
+    { id: 'payroll', label: 'Payroll', icon: IndianRupee },
     { id: 'documents', label: 'Documents', icon: FileText },
   ];
 

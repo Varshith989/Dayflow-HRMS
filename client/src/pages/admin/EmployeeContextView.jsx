@@ -4,7 +4,7 @@ import {
   User,
   Clock,
   CalendarDays,
-  DollarSign,
+  IndianRupee,
   FileText,
   CheckCircle2,
   AlertCircle,
@@ -354,7 +354,7 @@ export const EmployeeContextView = () => {
           { id: 'profile', label: 'Employment & Personal', icon: User },
           { id: 'attendance', label: 'Attendance Logs', icon: Clock },
           { id: 'leaves', label: 'Time Off & Leaves', icon: CalendarDays },
-          { id: 'payroll', label: 'Compensation & Payroll', icon: DollarSign },
+          { id: 'payroll', label: 'Compensation & Payroll', icon: IndianRupee },
           { id: 'documents', label: 'Compliance Documents', icon: FileText },
         ].map((tab) => {
           const Icon = tab.icon;

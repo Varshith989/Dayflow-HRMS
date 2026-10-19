@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -6,7 +6,7 @@ import {
   Users,
   Clock,
   CalendarDays,
-  DollarSign,
+  IndianRupee,
   UserCircle,
   Sun,
   Moon,
@@ -69,14 +69,14 @@ export const CommandPalette = ({ isOpen, onClose }) => {
         { label: 'Employee Directory', path: '/admin/employees', icon: Users, category: 'Navigation' },
         { label: 'All Attendance', path: '/admin/attendance', icon: Clock, category: 'Navigation' },
         { label: 'Time Off Approvals', path: '/admin/leaves', icon: CalendarDays, category: 'Navigation' },
-        { label: 'Payroll Management', path: '/admin/payroll', icon: DollarSign, category: 'Navigation' },
+        { label: 'Payroll Management', path: '/admin/payroll', icon: IndianRupee, category: 'Navigation' },
         { label: 'Admin Profile', path: '/admin/profile', icon: UserCircle, category: 'Navigation' },
       ]
     : [
         { label: 'Employee Dashboard', path: '/employee', icon: LayoutDashboard, category: 'Navigation' },
         { label: 'My Attendance Logs', path: '/employee/attendance', icon: Clock, category: 'Navigation' },
         { label: 'My Time Off Requests', path: '/employee/leaves', icon: CalendarDays, category: 'Navigation' },
-        { label: 'My Salary & Payslips', path: '/employee/salary', icon: DollarSign, category: 'Navigation' },
+        { label: 'My Salary & Payslips', path: '/employee/salary', icon: IndianRupee, category: 'Navigation' },
         { label: 'My Profile & Settings', path: '/employee/profile', icon: UserCircle, category: 'Navigation' },
       ];
 
