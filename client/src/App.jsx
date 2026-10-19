@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { EmployeeInspectionProvider } from './context/EmployeeInspectionContext';
@@ -19,28 +19,6 @@ import MyAttendancePage from './pages/employee/MyAttendancePage';
 import MyLeavesPage from './pages/employee/MyLeavesPage';
 import MySalaryPage from './pages/employee/MySalaryPage';
 
-// Root redirect handler based on authentication status & role
-const RootRedirect = () => {
-  const { isAuthenticated, user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="w-10 h-10 border-3 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return user?.role === 'admin' ? (
-    <Navigate to="/admin" replace />
-  ) : (
-    <Navigate to="/employee" replace />
-  );
-};
 
 function App() {
   return (
@@ -77,9 +55,9 @@ function App() {
                   </Route>
                 </Route>
 
-                {/* Index and fallback redirects */}
-                <Route path="/" element={<RootRedirect />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
+                {/* Index and fallback redirects - always open login page first */}
+                <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
             </BrowserRouter>
           </EmployeeInspectionProvider>
